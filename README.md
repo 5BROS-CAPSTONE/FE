@@ -76,4 +76,4 @@ Khi có API backend, thay các hàm trong store bằng lời gọi API, giữ ng
 
 ## Đóng góp
 
-Đọc [CONTRIBUTING.md](CONTRIBUTING.md) trước khi tạo nhánh và mở Pull Request.
+Mỗi thành viên làm trên nhánh mang tên mình rồi mở Pull Request vào `main`. Chi tiết trong [CONTRIBUTING.md](CONTRIBUTING.md).
