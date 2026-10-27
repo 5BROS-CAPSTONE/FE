@@ -1,87 +1,108 @@
-import type { Drone, Mission, UavProfile } from '../types'
+import type { Battery, Drone, Mission, UavProfile } from '../types'
 
-// Mock data mirroring the Stitch screens, used until the backend API is available
+// Mock data matching the S1 handoff; specs come from "[5BROS] Danh Sach Thong So Drone".
+// "Today" for this data is 26/10/2026, so missions not flown yet are dated after it.
 export const CURRENT_USER = { name: 'Nguyễn Văn An', role: 'Kỹ thuật viên bảo trì' }
 export const COOPERATIVE = 'HTX Nông Nghiệp Tháp Mười'
 export const MANUFACTURERS = ['DJI', 'XAG', 'Hylio', 'Khác']
 
-const djiSpecs = {
-  manufacturer: 'DJI',
-  batteryEnergyWh: null,
-  batteriesPerDrone: 1,
-  minTempC: 0,
-  maxTempC: 45,
-  maxSpeedMs: 10,
-}
+const created = (at: string) => ({ version: 1, createdAt: at, createdBy: CURRENT_USER.name, note: 'Tạo mới' })
 
 export const seedProfiles: UavProfile[] = [
   {
-    ...djiSpecs,
     id: 'p-t20p',
+    manufacturer: 'DJI',
     model: 'Agras T20P',
-    emptyWeightKg: 26,
-    maxPayloadKg: 20,
-    mtowKg: 52,
-    batteryCapacityAh: 13,
+    emptyWeightKg: 26.0,
+    mtowKg: 52.0,
+    maxPayloadKg: 20.0,
+    batteryCapacityAh: 13.0,
     batteryEnergyWh: 679,
-    maxWindMs: 6,
+    batteriesPerDrone: 1,
+    maxWindMs: 6.0,
+    minTempC: 0,
+    maxTempC: 45,
+    maxSpeedMs: 10.0,
     maxFlightTimeMin: 14.5,
     version: 2,
     status: 'active',
     updatedAt: '2026-10-15T09:30:00',
     versions: [
-      { version: 2, createdAt: '2026-10-15T09:30:00', createdBy: 'Nguyễn Văn An', note: 'Sửa dung lượng pin' },
-      { version: 1, createdAt: '2026-10-01T08:00:00', createdBy: 'Nguyễn Văn An', note: 'Tạo mới' },
+      { version: 2, createdAt: '2026-10-15T09:30:00', createdBy: CURRENT_USER.name, note: 'Sửa dung lượng pin' },
+      created('2026-10-01T08:00:00'),
     ],
   },
   {
-    ...djiSpecs,
     id: 'p-t25',
+    manufacturer: 'DJI',
     model: 'Agras T25',
-    emptyWeightKg: 32,
-    maxPayloadKg: 20,
-    mtowKg: 58,
-    batteryCapacityAh: 14,
-    maxWindMs: 6,
-    maxFlightTimeMin: 16,
+    emptyWeightKg: 25.4,
+    mtowKg: 52.0,
+    maxPayloadKg: 20.0,
+    batteryCapacityAh: 15.5,
+    batteryEnergyWh: 809,
+    batteriesPerDrone: 1,
+    maxWindMs: 6.0,
+    minTempC: 0,
+    maxTempC: 45,
+    maxSpeedMs: 10.0,
+    maxFlightTimeMin: 14.5,
     version: 1,
     status: 'active',
     updatedAt: '2026-10-18T14:15:00',
-    versions: [{ version: 1, createdAt: '2026-10-18T14:15:00', createdBy: 'Nguyễn Văn An', note: 'Tạo mới' }],
+    versions: [created('2026-10-18T14:15:00')],
   },
   {
-    ...djiSpecs,
     id: 'p-t30',
+    manufacturer: 'DJI',
     model: 'Agras T30',
-    emptyWeightKg: 36.5,
-    maxPayloadKg: 30,
-    mtowKg: 76.5,
-    batteryCapacityAh: 29,
-    maxWindMs: 8,
+    emptyWeightKg: 26.3,
+    mtowKg: 66.5,
+    maxPayloadKg: 30.0,
+    batteryCapacityAh: 29.0,
+    batteryEnergyWh: null,
+    batteriesPerDrone: 1,
+    maxWindMs: 6.0,
+    minTempC: 0,
+    maxTempC: 45,
+    maxSpeedMs: 10.0,
     maxFlightTimeMin: 20.5,
     version: 1,
     status: 'active',
     updatedAt: '2026-10-22T08:00:00',
-    versions: [{ version: 1, createdAt: '2026-10-22T08:00:00', createdBy: 'Nguyễn Văn An', note: 'Tạo mới' }],
+    versions: [created('2026-10-22T08:00:00')],
   },
   {
-    ...djiSpecs,
     id: 'p-t50',
+    manufacturer: 'DJI',
     model: 'Agras T50',
     emptyWeightKg: 39.9,
-    maxPayloadKg: 40,
-    mtowKg: 92,
-    batteryCapacityAh: 30,
-    maxWindMs: 6,
-    maxFlightTimeMin: 18,
+    mtowKg: 92.0,
+    maxPayloadKg: 40.0,
+    batteryCapacityAh: 30.0,
+    batteryEnergyWh: 1567,
+    batteriesPerDrone: 1,
+    maxWindMs: 6.0,
+    minTempC: 0,
+    maxTempC: 45,
+    maxSpeedMs: 10.0,
+    maxFlightTimeMin: 16.5,
     version: 1,
     status: 'active',
     updatedAt: '2026-10-20T09:15:00',
-    versions: [{ version: 1, createdAt: '2026-10-20T09:15:00', createdBy: 'Nguyễn Văn An', note: 'Tạo mới' }],
+    versions: [created('2026-10-20T09:15:00')],
   },
 ]
 
-const battery = (code: string, capacityAh: number, attachedAt: string) => [{ code, capacityAh, attachedAt }]
+const SYSTEM = 'Hệ thống'
+const newDrone = (at: string) => ({ at, by: SYSTEM, from: 'new' as const, to: 'unavailable' as const, reason: 'Chưa gắn pin' })
+const batteryReady = (at: string) => ({
+  at,
+  by: CURRENT_USER.name,
+  from: 'unavailable' as const,
+  to: 'available' as const,
+  reason: 'Đã gắn đủ pin',
+})
 
 export const seedDrones: Drone[] = [
   {
@@ -90,13 +111,10 @@ export const seedDrones: Drone[] = [
     serial: '1581F6T20P0001',
     profileId: 'p-t20p',
     status: 'available',
-    batteries: battery('PIN-T20P-01', 13, '2026-10-06T09:00:00'),
+    unavailableReason: null,
     addedAt: '2026-10-05T14:00:00',
     note: '',
-    history: [
-      { at: '2026-10-06T09:00:00', by: 'Nguyễn Văn An', from: 'unavailable', to: 'available', reason: 'Đã gắn đủ pin' },
-      { at: '2026-10-05T14:00:00', by: 'Hệ thống', from: 'new', to: 'unavailable', reason: 'Chưa gắn pin' },
-    ],
+    history: [batteryReady('2026-10-06T09:00:00'), newDrone('2026-10-05T14:00:00')],
   },
   {
     id: 'd-t20p-2',
@@ -104,13 +122,10 @@ export const seedDrones: Drone[] = [
     serial: '1581F6T20P0002',
     profileId: 'p-t20p',
     status: 'available',
-    batteries: battery('PIN-T20P-02', 13, '2026-10-06T09:30:00'),
+    unavailableReason: null,
     addedAt: '2026-10-05T14:10:00',
     note: '',
-    history: [
-      { at: '2026-10-06T09:30:00', by: 'Nguyễn Văn An', from: 'unavailable', to: 'available', reason: 'Đã gắn đủ pin' },
-      { at: '2026-10-05T14:10:00', by: 'Hệ thống', from: 'new', to: 'unavailable', reason: 'Chưa gắn pin' },
-    ],
+    history: [batteryReady('2026-10-06T09:30:00'), newDrone('2026-10-05T14:10:00')],
   },
   {
     id: 'd-t20p-3',
@@ -118,13 +133,10 @@ export const seedDrones: Drone[] = [
     serial: '1581F6T20P0003',
     profileId: 'p-t20p',
     status: 'available',
-    batteries: battery('PIN-T20P-03', 13, '2026-10-07T10:00:00'),
+    unavailableReason: null,
     addedAt: '2026-10-05T14:20:00',
     note: '',
-    history: [
-      { at: '2026-10-07T10:00:00', by: 'Nguyễn Văn An', from: 'unavailable', to: 'available', reason: 'Đã gắn đủ pin' },
-      { at: '2026-10-05T14:20:00', by: 'Hệ thống', from: 'new', to: 'unavailable', reason: 'Chưa gắn pin' },
-    ],
+    history: [batteryReady('2026-10-07T10:00:00'), newDrone('2026-10-05T14:20:00')],
   },
   {
     id: 'd-t25-1',
@@ -132,13 +144,13 @@ export const seedDrones: Drone[] = [
     serial: '1581F6T25A0001',
     profileId: 'p-t25',
     status: 'in-mission',
-    batteries: battery('PIN-T25-01', 14, '2026-10-19T08:00:00'),
+    unavailableReason: null,
     addedAt: '2026-10-18T15:00:00',
     note: '',
     history: [
-      { at: '2026-10-27T06:30:00', by: 'Hệ thống', from: 'available', to: 'in-mission', reason: 'Bắt đầu Phun ruộng B' },
-      { at: '2026-10-19T08:00:00', by: 'Nguyễn Văn An', from: 'unavailable', to: 'available', reason: 'Đã gắn đủ pin' },
-      { at: '2026-10-18T15:00:00', by: 'Hệ thống', from: 'new', to: 'unavailable', reason: 'Chưa gắn pin' },
+      { at: '2026-10-26T06:30:00', by: SYSTEM, from: 'available', to: 'in-mission', reason: 'Operator xác nhận cất cánh – Phun ruộng B' },
+      batteryReady('2026-10-19T08:00:00'),
+      newDrone('2026-10-18T15:00:00'),
     ],
   },
   {
@@ -147,13 +159,13 @@ export const seedDrones: Drone[] = [
     serial: '1581F6T25A0002',
     profileId: 'p-t25',
     status: 'unavailable',
-    batteries: battery('PIN-T25-02', 14, '2026-10-19T08:10:00'),
+    unavailableReason: 'Thay cánh quạt',
     addedAt: '2026-10-18T15:10:00',
     note: '',
     history: [
-      { at: '2026-10-20T10:00:00', by: 'Nguyễn Văn An', from: 'available', to: 'unavailable', reason: 'Thay cánh quạt' },
-      { at: '2026-10-19T08:10:00', by: 'Nguyễn Văn An', from: 'unavailable', to: 'available', reason: 'Đã gắn đủ pin' },
-      { at: '2026-10-18T15:10:00', by: 'Hệ thống', from: 'new', to: 'unavailable', reason: 'Chưa gắn pin' },
+      { at: '2026-10-20T10:00:00', by: CURRENT_USER.name, from: 'available', to: 'unavailable', reason: 'Thay cánh quạt' },
+      batteryReady('2026-10-19T08:10:00'),
+      newDrone('2026-10-18T15:10:00'),
     ],
   },
   {
@@ -162,12 +174,12 @@ export const seedDrones: Drone[] = [
     serial: '1581F6T25A0003',
     profileId: 'p-t25',
     status: 'retired',
-    batteries: [],
+    unavailableReason: null,
     addedAt: '2026-10-18T15:20:00',
-    note: 'Hỏng khung sau va chạm',
+    note: '',
     history: [
-      { at: '2026-10-24T16:00:00', by: 'Nguyễn Văn An', from: 'unavailable', to: 'retired', reason: 'Hỏng khung sau va chạm' },
-      { at: '2026-10-18T15:20:00', by: 'Hệ thống', from: 'new', to: 'unavailable', reason: 'Chưa gắn pin' },
+      { at: '2026-10-24T16:00:00', by: CURRENT_USER.name, from: 'unavailable', to: 'retired', reason: 'Ngưng sử dụng' },
+      newDrone('2026-10-18T15:20:00'),
     ],
   },
   {
@@ -176,15 +188,52 @@ export const seedDrones: Drone[] = [
     serial: '1581F6T30A0001',
     profileId: 'p-t30',
     status: 'unavailable',
-    batteries: [],
+    unavailableReason: 'Chưa gắn pin',
     addedAt: '2026-10-22T09:00:00',
     note: '',
-    history: [{ at: '2026-10-22T09:00:00', by: 'Hệ thống', from: 'new', to: 'unavailable', reason: 'Chưa gắn pin' }],
+    history: [newDrone('2026-10-22T09:00:00')],
   },
 ]
 
+const attached = (code: string, capacityAh: number, droneId: string, attachedAt: string): Battery => ({
+  code,
+  capacityAh,
+  droneId,
+  attachedAt,
+  status: 'attached',
+})
+
+export const seedBatteries: Battery[] = [
+  attached('PIN-T20P-01', 13, 'd-t20p-1', '2026-10-06T09:00:00'),
+  attached('PIN-T20P-02', 13, 'd-t20p-2', '2026-10-06T09:30:00'),
+  attached('PIN-T20P-03', 13, 'd-t20p-3', '2026-10-07T10:00:00'),
+  attached('PIN-T25-01', 15.5, 'd-t25-1', '2026-10-19T08:00:00'),
+  attached('PIN-T25-02', 15.5, 'd-t25-2', '2026-10-19T08:10:00'),
+]
+
 export const seedMissions: Mission[] = [
-  { id: 'm-a', name: 'Phun ruộng A', date: '2026-10-28', droneId: 'd-t20p-2', state: 'evaluated', assessmentStale: false },
-  { id: 'm-b', name: 'Phun ruộng B', date: '2026-10-27', droneId: 'd-t25-1', state: 'in-flight', assessmentStale: false },
-  { id: 'm-c', name: 'Phun ruộng C', date: '2026-10-29', droneId: 'd-t20p-3', state: 'approved', assessmentStale: false },
+  {
+    id: 'm-a',
+    name: 'Phun ruộng A',
+    date: '2026-10-28',
+    droneId: 'd-t20p-2',
+    status: 'Assessed',
+    assessment: { status: 'Valid', profileVersion: 2 },
+  },
+  {
+    id: 'm-b',
+    name: 'Phun ruộng B',
+    date: '2026-10-26',
+    droneId: 'd-t25-1',
+    status: 'In-flight',
+    assessment: { status: 'Valid', profileVersion: 1 },
+  },
+  {
+    id: 'm-c',
+    name: 'Phun ruộng C',
+    date: '2026-10-29',
+    droneId: 'd-t20p-3',
+    status: 'Approved',
+    assessment: { status: 'Valid', profileVersion: 2 },
+  },
 ]

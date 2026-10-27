@@ -15,6 +15,6 @@ npm run dev
 - **UAV Profile**: danh sách, tạo mới, chỉnh sửa (tạo version mới), ngưng sử dụng / không thể ngưng sử dụng, xác nhận tạo version.
 - **Drone**: danh sách, chi tiết, thêm, chỉnh sửa (đổi UAV Profile), chuyển Unavailable, mở lại / chưa thể mở lại, ngưng sử dụng, không thể đổi trạng thái khi đang bay.
 
-Luật nghiệp vụ đang chạy trên store giả lập ở `src/store/FleetProvider.tsx` (dữ liệu reset khi tải lại trang). Khi có API, thay các hàm trong store bằng lời gọi BE.
+Luật nghiệp vụ (S1 + subprocess DC.1 `markStale`) chạy trên store giả lập ở `src/store/FleetProvider.tsx` (dữ liệu reset khi tải lại trang). Thông số UAV Profile lấy từ sheet "[5BROS] Danh Sach Thong So Drone". Khi có API, thay các hàm trong store bằng lời gọi BE.
 
 Các mục menu khác (Nhiệm vụ, Pin, Báo cáo...) đang là trang placeholder vì chưa có thiết kế.

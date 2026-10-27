@@ -7,14 +7,15 @@ export interface ProfileVersion {
   note: string
 }
 
-/** Technical specs of a UAV Profile, taken from the manufacturer's datasheet. */
+/** The 13 technical fields of a UAV Profile, taken from the manufacturer's datasheet. */
 export interface ProfileSpecs {
   manufacturer: string
   model: string
   emptyWeightKg: number
-  maxPayloadKg: number
   mtowKg: number
+  maxPayloadKg: number
   batteryCapacityAh: number
+  /** Only optional field: some datasheets (e.g. Agras T30) do not publish it. */
   batteryEnergyWh: number | null
   batteriesPerDrone: number
   maxWindMs: number
@@ -34,12 +35,6 @@ export interface UavProfile extends ProfileSpecs {
 
 export type DroneStatus = 'available' | 'in-mission' | 'unavailable' | 'retired'
 
-export interface Battery {
-  code: string
-  capacityAh: number
-  attachedAt: string
-}
-
 export interface StatusChange {
   at: string
   by: string
@@ -54,19 +49,51 @@ export interface Drone {
   serial: string
   profileId: string
   status: DroneStatus
-  batteries: Battery[]
+  unavailableReason: string | null
   addedAt: string
   note: string
   history: StatusChange[]
 }
 
-export type MissionState = 'planned' | 'evaluated' | 'approved' | 'in-flight'
+export type BatteryStatus = 'attached' | 'unassigned' | 'retired'
+
+export interface Battery {
+  code: string
+  capacityAh: number
+  droneId: string | null
+  attachedAt: string | null
+  status: BatteryStatus
+}
+
+export type MissionStatus =
+  | 'Draft'
+  | 'Defined'
+  | 'Planned'
+  | 'Assessed'
+  | 'Approved'
+  | 'Blocked'
+  | 'In-flight'
+  | 'Completed'
+  | 'Aborted'
+  | 'Closed'
+
+/** DSS assessment of a mission; it references the profile version used at assessment time. */
+export interface Assessment {
+  status: 'Valid' | 'STALE'
+  profileVersion: number
+}
 
 export interface Mission {
   id: string
   name: string
   date: string
   droneId: string | null
-  state: MissionState
-  assessmentStale: boolean
+  status: MissionStatus
+  assessment: Assessment | null
+}
+
+export interface MissionNotification {
+  at: string
+  missionId: string
+  message: string
 }

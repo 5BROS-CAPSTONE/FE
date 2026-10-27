@@ -4,7 +4,7 @@ import { droneStatusLabel } from '../utils/format'
 const styles: Record<DroneStatus, { pill: string; dot: string }> = {
   available: { pill: 'bg-surface-container-low text-primary-container', dot: 'bg-primary-container' },
   'in-mission': { pill: 'bg-tertiary-fixed text-tertiary', dot: 'bg-tertiary' },
-  unavailable: { pill: 'bg-secondary-container text-on-secondary-fixed-variant', dot: 'bg-secondary' },
+  unavailable: { pill: 'bg-warning-container text-on-warning-container ring-1 ring-warning-outline', dot: 'bg-warning' },
   retired: { pill: 'bg-surface-container text-outline', dot: 'bg-outline' },
 }
 

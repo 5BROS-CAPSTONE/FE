@@ -33,16 +33,15 @@ export default function UavProfileFormPage() {
 
 function ProfileForm({ profile }: { profile?: UavProfile }) {
   const navigate = useNavigate()
-  const { profiles, createProfile, updateProfile, missionsAffectedByProfile, getDrone, notify } = useFleet()
+  const { profiles, createProfile, updateProfile, affectedMissions, activeDronesOf, getDrone, notify } = useFleet()
   const isEdit = !!profile
   const original = profile ? toForm(profile) : emptyForm
   const [values, setValues] = useState<FormValues>(original)
   const [submitted, setSubmitted] = useState(false)
   const [confirming, setConfirming] = useState(false)
 
-  const takenModels = profiles
-    .filter((p) => p.id !== profile?.id && p.manufacturer === values.manufacturer)
-    .map((p) => p.model)
+  // Model names must be unique across all profiles
+  const takenModels = profiles.filter((p) => p.id !== profile?.id).map((p) => p.model)
   const errors = validate(values, takenModels)
   // Before the first submit only show errors for fields the user has filled in
   const errorOf = (k: keyof ProfileSpecs) => (submitted || values[k] !== '' ? errors[k] : undefined)
@@ -51,7 +50,7 @@ function ProfileForm({ profile }: { profile?: UavProfile }) {
   const changedKeys = (Object.keys(values) as (keyof ProfileSpecs)[]).filter((k) =>
     numericFields[k as NumericKey] ? Number(values[k]) !== Number(original[k]) || (values[k] === '') !== (original[k] === '') : values[k] !== original[k],
   )
-  const affected = profile ? missionsAffectedByProfile(profile.id) : []
+  const affected = profile ? affectedMissions(activeDronesOf(profile.id).map((d) => d.id)) : []
   const filledRequired = requiredKeys.filter((k) => values[k].trim() !== '').length
   const progress = Math.round((filledRequired / requiredKeys.length) * 100)
   const nextVersion = (profile?.version ?? 0) + 1
@@ -77,7 +76,11 @@ function ProfileForm({ profile }: { profile?: UavProfile }) {
     if (!profile) return
     const labels = changedKeys.map((k) => (k === 'model' ? 'tên model' : k === 'manufacturer' ? 'hãng' : numericFields[k as NumericKey].label.toLowerCase()))
     updateProfile(profile.id, toSpecs(values), `Sửa ${labels.join(', ')}`)
-    notify(`Đã lưu ${values.model} thành version v${nextVersion}`)
+    notify(
+      affected.length > 0
+        ? `Đã lưu ${values.model} thành version v${nextVersion} và thông báo Mission Manager`
+        : `Đã lưu ${values.model} thành version v${nextVersion}`,
+    )
     navigate('/uav-profiles')
   }
 
@@ -132,7 +135,7 @@ function ProfileForm({ profile }: { profile?: UavProfile }) {
         </div>
       )}
       {isEdit && !retired && (
-        <div className="mb-space-lg flex items-start gap-space-md rounded-lg bg-secondary-container/60 p-space-md shadow-sm">
+        <div className="mb-space-lg flex items-start gap-space-md rounded-lg bg-warning-container p-space-md shadow-sm ring-1 ring-warning-outline">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-container-lowest text-secondary">
             <Icon name="warning" />
           </span>
@@ -175,8 +178,8 @@ function ProfileForm({ profile }: { profile?: UavProfile }) {
           <SectionCard icon="scale" title="2. Khối lượng" subtitle="Trọng lượng rỗng, trọng lượng tải danh định và ngưỡng an toàn MTOW">
             <div className="grid grid-cols-1 gap-space-md md:grid-cols-2">
               {numberField('emptyWeightKg')}
+              {numberField('mtowKg')}
               {numberField('maxPayloadKg')}
-              {numberField('mtowKg', undefined, 'md:col-span-2')}
             </div>
           </SectionCard>
 

@@ -141,11 +141,6 @@ export default function AppLayout() {
                 <span className="font-label-sm text-label-sm font-semibold uppercase text-on-surface-variant">Hợp tác xã</span>
                 <span className="font-title-sm text-title-sm text-on-surface">{COOPERATIVE}</span>
               </div>
-              <div className="h-8 w-px bg-surface-container-high" />
-              <div className="flex items-center gap-space-xs rounded-full bg-surface-container-low px-2.5 py-1">
-                <span className="h-2 w-2 rounded-full bg-primary" />
-                <span className="font-label-sm text-label-sm font-medium text-on-surface">Trạng thái: Bình thường</span>
-              </div>
             </div>
             <button
               type="button"

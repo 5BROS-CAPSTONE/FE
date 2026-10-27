@@ -6,7 +6,7 @@ import Modal, { InfoNote, ModalSectionLabel } from '../../components/Modal'
 import { DroneStatusBadge, EffectTag } from '../../components/StatusBadge'
 import { useFleet, type ReopenResult } from '../../store/fleetContext'
 import type { Drone, Mission } from '../../types'
-import { formatDate, missionStateLabel } from '../../utils/format'
+import { formatDate, missionStatusLabel } from '../../utils/format'
 
 export type DroneAction = 'unavailable' | 'reopen' | 'retire'
 
@@ -16,7 +16,7 @@ interface DroneActionDialogProps {
   onClose: () => void
 }
 
-/** Routes a status action to the right dialog, enforcing the fleet rules. */
+/** Routes a status action to the right dialog, enforcing the S1 rules. */
 export default function DroneActionDialog({ drone, action, onClose }: DroneActionDialogProps) {
   if (drone.status === 'in-mission') return <BlockedDialog drone={drone} onClose={onClose} />
   if (action === 'unavailable') return <UnavailableDialog drone={drone} onClose={onClose} />
@@ -24,7 +24,8 @@ export default function DroneActionDialog({ drone, action, onClose }: DroneActio
   return <RetireDialog drone={drone} onClose={onClose} />
 }
 
-function AffectedMissions({ missions, title }: { missions: Mission[]; title: string }) {
+/** Missions whose drone is no longer usable: STALE, back to Planned, drone released (DC.1). */
+function ReleasedMissions({ missions, title }: { missions: Mission[]; title: string }) {
   if (missions.length === 0) return null
   return (
     <div>
@@ -35,7 +36,7 @@ function AffectedMissions({ missions, title }: { missions: Mission[]; title: str
         {missions.map((m) => (
           <div key={m.id} className="flex flex-col gap-2.5 rounded-xl bg-surface-container-low p-3">
             <div className="font-title-sm text-title-sm font-medium">
-              {m.name} – {formatDate(m.date)} – {missionStateLabel[m.state]}
+              {m.name} – {formatDate(m.date)} – {missionStatusLabel[m.status]}
             </div>
             <div className="flex flex-wrap items-center gap-1.5">
               <EffectTag kind="stale" />
@@ -51,7 +52,7 @@ function AffectedMissions({ missions, title }: { missions: Mission[]; title: str
 
 function BlockedDialog({ drone, onClose }: { drone: Drone; onClose: () => void }) {
   const { missions } = useFleet()
-  const flying = missions.find((m) => m.droneId === drone.id && m.state === 'in-flight')
+  const flying = missions.find((m) => m.droneId === drone.id && m.status === 'In-flight')
   return (
     <Modal
       tone="info"
@@ -64,17 +65,21 @@ function BlockedDialog({ drone, onClose }: { drone: Drone; onClose: () => void }
 }
 
 function UnavailableDialog({ drone, onClose }: { drone: Drone; onClose: () => void }) {
-  const { heldMissionsOf, markUnavailable, notify } = useFleet()
+  const { affectedMissions, markUnavailable, notify } = useFleet()
   const [reason, setReason] = useState('')
   const [touched, setTouched] = useState(false)
-  const held = heldMissionsOf(drone.id)
+  const affected = affectedMissions([drone.id])
   const missing = reason.trim() === ''
 
   const confirm = () => {
     setTouched(true)
     if (missing) return
     markUnavailable(drone.id, reason.trim())
-    notify(`Đã chuyển ${drone.name} sang Unavailable`)
+    notify(
+      affected.length > 0
+        ? `Đã chuyển ${drone.name} sang Unavailable và thông báo Mission Manager`
+        : `Đã chuyển ${drone.name} sang Unavailable`,
+    )
     onClose()
   }
 
@@ -110,9 +115,9 @@ function UnavailableDialog({ drone, onClose }: { drone: Drone; onClose: () => vo
           Bắt buộc nhập lý do
         </span>
       </div>
-      <AffectedMissions missions={held} title="Nhiệm vụ bị ảnh hưởng" />
+      <ReleasedMissions missions={affected} title="Nhiệm vụ bị ảnh hưởng" />
       <InfoNote>
-        {held.length > 0 ? 'Mission Manager sẽ nhận thông báo để chọn drone khác. ' : ''}Sửa xong, dùng Mở lại để đưa drone về
+        {affected.length > 0 ? 'Mission Manager sẽ nhận thông báo để chọn drone khác. ' : ''}Sửa xong, dùng Mở lại để đưa drone về
         Available.
       </InfoNote>
     </Modal>
@@ -124,7 +129,7 @@ function ReopenDialog({ drone, onClose }: { drone: Drone; onClose: () => void })
   const { reopenDrone, getProfile, notify } = useFleet()
   const [result, setResult] = useState<ReopenResult | null>(null)
   const profile = getProfile(drone.profileId)
-  const lastChange = drone.history.find((h) => h.to === 'unavailable')
+  const since = drone.history.find((h) => h.to === 'unavailable')
 
   if (result && !result.ok) {
     return (
@@ -173,6 +178,7 @@ function ReopenDialog({ drone, onClose }: { drone: Drone; onClose: () => void })
           </Button>
           <Button
             onClick={() => {
+              // The user confirms first; the battery check runs afterwards
               const r = reopenDrone(drone.id)
               if (r.ok) {
                 notify(`${drone.name} đã chuyển sang Available`)
@@ -188,9 +194,10 @@ function ReopenDialog({ drone, onClose }: { drone: Drone; onClose: () => void })
       <div className="flex flex-wrap items-center gap-2 rounded-xl bg-surface-container-low p-3">
         <span className="text-on-surface-variant">Trạng thái hiện tại:</span>
         <DroneStatusBadge status={drone.status} />
-        {lastChange && (
+        {drone.unavailableReason && (
           <span className="text-on-surface-variant">
-            – Lý do: {lastChange.reason} ({formatDate(lastChange.at)})
+            – Lý do: {drone.unavailableReason}
+            {since && ` (${formatDate(since.at)})`}
           </span>
         )}
       </div>
@@ -202,8 +209,9 @@ function ReopenDialog({ drone, onClose }: { drone: Drone; onClose: () => void })
 }
 
 function RetireDialog({ drone, onClose }: { drone: Drone; onClose: () => void }) {
-  const { heldMissionsOf, retireDrone, notify } = useFleet()
-  const held = heldMissionsOf(drone.id)
+  const { affectedMissions, batteriesOf, retireDrone, notify } = useFleet()
+  const affected = affectedMissions([drone.id])
+  const attached = batteriesOf(drone.id)
   return (
     <Modal
       title={`Ngưng sử dụng drone ${drone.name}?`}
@@ -218,7 +226,11 @@ function RetireDialog({ drone, onClose }: { drone: Drone; onClose: () => void })
             variant="danger"
             onClick={() => {
               retireDrone(drone.id)
-              notify(`Đã ngưng sử dụng ${drone.name}`)
+              notify(
+                affected.length > 0
+                  ? `Đã ngưng sử dụng ${drone.name} và thông báo Mission Manager`
+                  : `Đã ngưng sử dụng ${drone.name}`,
+              )
               onClose()
             }}
           >
@@ -227,23 +239,26 @@ function RetireDialog({ drone, onClose }: { drone: Drone; onClose: () => void })
         </>
       }
     >
-      {drone.batteries.length > 0 && (
+      {attached.length > 0 && (
         <div>
           <ModalSectionLabel>Pin được tháo khỏi drone</ModalSectionLabel>
           <div className="flex flex-col gap-2">
-            {drone.batteries.map((b) => (
+            {attached.map((b) => (
               <div key={b.code} className="flex items-center justify-between rounded-xl bg-surface-container-low p-3">
                 <span className="flex items-center gap-2 font-mono font-semibold">
                   <Icon name="battery_charging_full" size={18} className="text-primary" /> {b.code}
                 </span>
-                <span className="rounded-md bg-surface-container-high px-2 py-0.5 font-label-sm text-label-sm">Chưa gán</span>
+                <span className="flex items-center gap-1 font-label-md text-label-md text-on-surface-variant">
+                  Đang gắn <Icon name="arrow_forward" size={14} />
+                  <span className="rounded-md bg-surface-container-high px-2 py-0.5 text-on-surface">Chưa gán</span>
+                </span>
               </div>
             ))}
           </div>
         </div>
       )}
-      <AffectedMissions missions={held} title="Nhiệm vụ đang giữ chỗ drone" />
-      {held.length > 0 && <InfoNote>Mission Manager sẽ nhận thông báo để chọn drone khác cho nhiệm vụ.</InfoNote>}
+      <ReleasedMissions missions={affected} title="Nhiệm vụ đang giữ chỗ drone" />
+      {affected.length > 0 && <InfoNote>Mission Manager sẽ nhận thông báo để chọn drone khác cho nhiệm vụ.</InfoNote>}
     </Modal>
   )
 }

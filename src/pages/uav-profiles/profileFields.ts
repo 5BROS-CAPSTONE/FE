@@ -82,7 +82,7 @@ export function validate(values: FormValues, takenModels: string[]): Partial<Rec
     if (values[key].trim() === '') errors[key] = 'Bắt buộc nhập'
   }
   if (!errors.model && takenModels.some((m) => m.toLowerCase() === values.model.trim().toLowerCase())) {
-    errors.model = 'Model đã tồn tại cho hãng này'
+    errors.model = 'Tên model đã tồn tại'
   }
   for (const f of Object.values(numericFields)) {
     if (errors[f.key] || values[f.key] === '') continue

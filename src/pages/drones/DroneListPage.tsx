@@ -14,14 +14,14 @@ import DroneActionDialog, { type DroneAction } from './DroneActionDialog'
 const statusIconColor: Record<DroneStatus, string> = {
   available: 'text-primary-container',
   'in-mission': 'text-tertiary',
-  unavailable: 'text-secondary',
+  unavailable: 'text-warning',
   retired: 'text-outline',
 }
 
 export default function DroneListPage() {
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
-  const { drones, profiles, missions, getProfile } = useFleet()
+  const { drones, profiles, missions, getProfile, batteriesOf } = useFleet()
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState<DroneStatus | ''>('')
   const [pending, setPending] = useState<{ drone: Drone; action: DroneAction } | null>(null)
@@ -61,7 +61,7 @@ export default function DroneListPage() {
       <div className="mb-space-lg grid grid-cols-1 gap-space-md sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Available / Sẵn sàng" value={count('available')} icon="check_circle" iconClass="bg-surface-container-low text-primary-container" />
         <StatCard label="In-mission / Đang làm nhiệm vụ" value={count('in-mission')} icon="flight_takeoff" iconClass="bg-tertiary-fixed text-tertiary" />
-        <StatCard label="Unavailable / Không khả dụng" value={count('unavailable')} icon="pause_circle" iconClass="bg-surface-container-high text-secondary" />
+        <StatCard label="Unavailable / Không khả dụng" value={count('unavailable')} icon="pause_circle" iconClass="bg-warning-container text-warning" />
         <StatCard label="Ngưng sử dụng" value={count('retired')} icon="do_not_disturb_on" iconClass="bg-surface-container text-outline" />
       </div>
 
@@ -121,7 +121,8 @@ export default function DroneListPage() {
             const profile = getProfile(d.profileId)
             const retired = d.status === 'retired'
             const required = profile?.batteriesPerDrone ?? 1
-            const enoughBattery = d.batteries.length >= required
+            const attached = batteriesOf(d.id).length
+            const enoughBattery = attached >= required
             const mission = missions.find((m) => m.droneId === d.id)
             return (
               <tr
@@ -148,7 +149,7 @@ export default function DroneListPage() {
                     }`}
                   >
                     <Icon name={enoughBattery ? 'battery_charging_full' : 'battery_alert'} size={16} />
-                    {d.batteries.length}/{required}
+                    {attached}/{required}
                   </span>
                 </td>
                 <td className="px-space-md py-2">
@@ -157,7 +158,7 @@ export default function DroneListPage() {
                 <td className="px-space-md py-2 text-on-surface-variant">
                   {mission ? (
                     <span className="text-on-surface">
-                      {mission.name} – {mission.state === 'in-flight' ? '(đang bay)' : formatDate(mission.date)}
+                      {mission.name} – {mission.status === 'In-flight' ? '(đang bay)' : formatDate(mission.date)}
                     </span>
                   ) : (
                     '–'
@@ -169,7 +170,12 @@ export default function DroneListPage() {
                     {!retired && (
                       <>
                         <IconButton icon="edit" title="Chỉnh sửa" onClick={() => navigate(`/drones/${d.id}/edit`)} />
-                        <RowMenu items={menuFor(d)} dimmed={d.status === 'in-mission'} />
+                        {d.status === 'in-mission' ? (
+                          // Status actions are blocked while flying; the dimmed ⋮ explains why
+                          <IconButton icon="more_vert" title="Không thể thay đổi trạng thái" muted onClick={() => setPending({ drone: d, action: 'unavailable' })} />
+                        ) : (
+                          <RowMenu items={menuFor(d)} />
+                        )}
                       </>
                     )}
                   </div>

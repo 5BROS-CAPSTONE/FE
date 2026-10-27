@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react'
-import type { Drone, Mission, ProfileSpecs, UavProfile } from '../types'
+import type { Battery, Drone, Mission, MissionNotification, ProfileSpecs, UavProfile } from '../types'
 
 export interface DroneInput {
   name: string
@@ -13,18 +13,21 @@ export type ReopenResult = { ok: true } | { ok: false; attached: number; require
 export interface FleetStore {
   profiles: UavProfile[]
   drones: Drone[]
+  batteries: Battery[]
   missions: Mission[]
+  /** Notifications sent to the Mission Manager (DC.1). */
+  notifications: MissionNotification[]
   toast: string | null
   notify: (message: string) => void
 
   getProfile: (id: string) => UavProfile | undefined
   getDrone: (id: string) => Drone | undefined
+  /** Batteries currently attached to a drone. */
+  batteriesOf: (droneId: string) => Battery[]
   /** Drones of a profile that are not retired. */
   activeDronesOf: (profileId: string) => Drone[]
-  /** Missions holding a drone that are not flying yet. */
-  heldMissionsOf: (droneId: string) => Mission[]
-  /** Missions whose DSS assessment goes STALE when the profile's specs change. */
-  missionsAffectedByProfile: (profileId: string) => Mission[]
+  /** Missions not flown yet (Assessed / Approved) whose assessment goes STALE if these drones change. */
+  affectedMissions: (droneIds: string[]) => Mission[]
 
   createProfile: (specs: ProfileSpecs) => UavProfile
   updateProfile: (id: string, specs: ProfileSpecs, note: string) => void

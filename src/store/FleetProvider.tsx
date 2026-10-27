@@ -1,73 +1,93 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react'
-import { CURRENT_USER, seedDrones, seedMissions, seedProfiles } from '../mocks/data'
-import type { Drone, DroneStatus, Mission, ProfileSpecs, UavProfile } from '../types'
+import { CURRENT_USER, seedBatteries, seedDrones, seedMissions, seedProfiles } from '../mocks/data'
+import type { Battery, Drone, DroneStatus, Mission, MissionNotification, ProfileSpecs, UavProfile } from '../types'
 import { nowIso } from '../utils/format'
 import { FleetContext, type FleetStore } from './fleetContext'
 
-// In-memory store implementing the fleet business rules; swap for API calls once the BE is ready.
+const SYSTEM = 'Hệ thống'
+
+/** Only missions not flown yet with a DSS result are affected by fleet changes. */
+const isAffected = (m: Mission, droneIds: string[]) =>
+  !!m.droneId && droneIds.includes(m.droneId) && (m.status === 'Assessed' || m.status === 'Approved')
+
+// In-memory store implementing the S1 business rules; swap for API calls once the BE is ready.
 export function FleetProvider({ children }: { children: ReactNode }) {
   const [profiles, setProfiles] = useState<UavProfile[]>(seedProfiles)
   const [drones, setDrones] = useState<Drone[]>(seedDrones)
+  const [batteries, setBatteries] = useState<Battery[]>(seedBatteries)
   const [missions, setMissions] = useState<Mission[]>(seedMissions)
+  const [notifications, setNotifications] = useState<MissionNotification[]>([])
   const [toast, setToast] = useState<string | null>(null)
   const toastTimer = useRef<number | undefined>(undefined)
 
   const notify = useCallback((message: string) => {
     setToast(message)
     window.clearTimeout(toastTimer.current)
-    toastTimer.current = window.setTimeout(() => setToast(null), 3000)
+    toastTimer.current = window.setTimeout(() => setToast(null), 3500)
   }, [])
 
   const store = useMemo<FleetStore>(() => {
     const getProfile = (id: string) => profiles.find((p) => p.id === id)
     const getDrone = (id: string) => drones.find((d) => d.id === id)
+    const batteriesOf = (droneId: string) => batteries.filter((b) => b.droneId === droneId && b.status === 'attached')
     const activeDronesOf = (profileId: string) =>
       drones.filter((d) => d.profileId === profileId && d.status !== 'retired')
-    const heldMissionsOf = (droneId: string) =>
-      missions.filter((m) => m.droneId === droneId && m.state !== 'in-flight')
-    const missionsAffectedByProfile = (profileId: string) => {
-      const ids = new Set(activeDronesOf(profileId).map((d) => d.id))
-      return missions.filter((m) => m.droneId && ids.has(m.droneId) && m.state !== 'in-flight')
+    const affectedMissions = (droneIds: string[]) => missions.filter((m) => isAffected(m, droneIds))
+
+    /**
+     * Shared subprocess DC.1. The assessment goes STALE; DSS is never re-run here.
+     * stillUsable = false also sends the mission back to Planned and releases the drone.
+     */
+    const markStale = (droneIds: string[], stillUsable: boolean) => {
+      const hit = affectedMissions(droneIds)
+      if (hit.length === 0) return
+      setMissions((list) =>
+        list.map((m) => {
+          if (!isAffected(m, droneIds)) return m
+          const assessment = m.assessment && { ...m.assessment, status: 'STALE' as const }
+          return stillUsable ? { ...m, assessment } : { ...m, assessment, status: 'Planned', droneId: null }
+        }),
+      )
+      const at = nowIso()
+      setNotifications((list) => [
+        ...hit.map((m) => ({
+          at,
+          missionId: m.id,
+          message: stillUsable
+            ? `${m.name}: đánh giá STALE, cần chạy lại DSS`
+            : `${m.name}: đánh giá STALE, về Planned, cần chọn drone khác`,
+        })),
+        ...list,
+      ])
     }
 
-    const changeStatus = (id: string, to: DroneStatus, reason: string, patch: Partial<Drone> = {}) =>
+    const changeStatus = (id: string, to: DroneStatus, reason: string, unavailableReason: string | null) =>
       setDrones((list) =>
         list.map((d) =>
           d.id === id
             ? {
                 ...d,
-                ...patch,
                 status: to,
+                unavailableReason,
                 history: [{ at: nowIso(), by: CURRENT_USER.name, from: d.status, to, reason }, ...d.history],
               }
             : d,
         ),
       )
 
-    // Taking a drone out of service frees its held missions: assessment goes STALE, mission back to Planned.
-    const releaseMissions = (droneId: string) =>
-      setMissions((list) =>
-        list.map((m) =>
-          m.droneId === droneId && m.state !== 'in-flight'
-            ? { ...m, droneId: null, state: 'planned', assessmentStale: true }
-            : m,
-        ),
-      )
-
-    const markStale = (missionIds: string[]) =>
-      setMissions((list) => list.map((m) => (missionIds.includes(m.id) ? { ...m, assessmentStale: true } : m)))
-
     return {
       profiles,
       drones,
+      batteries,
       missions,
+      notifications,
       toast,
       notify,
       getProfile,
       getDrone,
+      batteriesOf,
       activeDronesOf,
-      heldMissionsOf,
-      missionsAffectedByProfile,
+      affectedMissions,
 
       createProfile: (specs: ProfileSpecs) => {
         const at = nowIso()
@@ -83,8 +103,9 @@ export function FleetProvider({ children }: { children: ReactNode }) {
         return profile
       },
 
+      // Never overwrites: a new version is created and old assessments keep referencing the old one (BR-04)
       updateProfile: (id, specs, note) => {
-        markStale(missionsAffectedByProfile(id).map((m) => m.id))
+        markStale(activeDronesOf(id).map((d) => d.id), true)
         const at = nowIso()
         setProfiles((list) =>
           list.map((p) =>
@@ -101,8 +122,10 @@ export function FleetProvider({ children }: { children: ReactNode }) {
         )
       },
 
-      retireProfile: (id) =>
-        setProfiles((list) => list.map((p) => (p.id === id ? { ...p, status: 'retired', updatedAt: nowIso() } : p))),
+      retireProfile: (id) => {
+        if (activeDronesOf(id).length > 0) return
+        setProfiles((list) => list.map((p) => (p.id === id ? { ...p, status: 'retired', updatedAt: nowIso() } : p)))
+      },
 
       createDrone: (input) => {
         const at = nowIso()
@@ -111,9 +134,9 @@ export function FleetProvider({ children }: { children: ReactNode }) {
           ...input,
           id: `d-${Date.now()}`,
           status: 'unavailable',
-          batteries: [],
+          unavailableReason: 'Chưa gắn pin',
           addedAt: at,
-          history: [{ at, by: 'Hệ thống', from: 'new', to: 'unavailable', reason: 'Chưa gắn pin' }],
+          history: [{ at, by: SYSTEM, from: 'new', to: 'unavailable', reason: 'Chưa gắn pin' }],
         }
         setDrones((list) => [...list, drone])
         return drone
@@ -121,30 +144,39 @@ export function FleetProvider({ children }: { children: ReactNode }) {
 
       updateDrone: (id, input) => {
         const drone = getDrone(id)
-        if (drone && drone.profileId !== input.profileId) markStale(heldMissionsOf(id).map((m) => m.id))
+        if (!drone) return
+        const profileChanged = drone.profileId !== input.profileId
+        if (profileChanged && drone.status === 'in-mission') return
+        if (profileChanged) markStale([id], true)
         setDrones((list) => list.map((d) => (d.id === id ? { ...d, ...input } : d)))
       },
 
       markUnavailable: (id, reason) => {
-        releaseMissions(id)
-        changeStatus(id, 'unavailable', reason)
+        if (getDrone(id)?.status === 'in-mission') return
+        markStale([id], false)
+        changeStatus(id, 'unavailable', reason, reason)
       },
 
+      // The only way back to Available: enough batteries attached for the profile
       reopenDrone: (id) => {
         const drone = getDrone(id)
         const required = drone ? (getProfile(drone.profileId)?.batteriesPerDrone ?? 1) : 1
-        const attached = drone?.batteries.length ?? 0
-        if (attached < required) return { ok: false, attached, required }
-        changeStatus(id, 'available', 'Mở lại sau khi kiểm tra đủ pin')
+        const attached = batteriesOf(id).length
+        if (!drone || attached < required) return { ok: false, attached, required }
+        changeStatus(id, 'available', 'Mở lại – đủ pin theo UAV Profile', null)
         return { ok: true }
       },
 
       retireDrone: (id) => {
-        releaseMissions(id)
-        changeStatus(id, 'retired', 'Ngưng sử dụng', { batteries: [] })
+        if (getDrone(id)?.status === 'in-mission') return
+        markStale([id], false)
+        setBatteries((list) =>
+          list.map((b) => (b.droneId === id ? { ...b, droneId: null, attachedAt: null, status: 'unassigned' } : b)),
+        )
+        changeStatus(id, 'retired', 'Ngưng sử dụng', null)
       },
     }
-  }, [profiles, drones, missions, toast, notify])
+  }, [profiles, drones, batteries, missions, notifications, toast, notify])
 
   return <FleetContext.Provider value={store}>{children}</FleetContext.Provider>
 }

@@ -1,4 +1,4 @@
-import type { DroneStatus, MissionState } from '../types'
+import type { DroneStatus, MissionStatus } from '../types'
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -18,6 +18,10 @@ export function nowIso() {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`
 }
 
+/**
+ * Drone status labels. The manual status is "Unavailable" per the BPMN; the function list (FLT-10)
+ * calls it "Maintenance" — change the label here if the team picks that name.
+ */
 export const droneStatusLabel: Record<DroneStatus | 'new', string> = {
   new: 'Tạo mới',
   available: 'Available',
@@ -26,11 +30,17 @@ export const droneStatusLabel: Record<DroneStatus | 'new', string> = {
   retired: 'Ngưng sử dụng',
 }
 
-export const missionStateLabel: Record<MissionState, string> = {
-  planned: 'Planned',
-  evaluated: 'Đã đánh giá',
-  approved: 'Đã phê duyệt',
-  'in-flight': 'Đang bay',
+export const missionStatusLabel: Record<MissionStatus, string> = {
+  Draft: 'Bản nháp',
+  Defined: 'Đã xác định',
+  Planned: 'Đã lập kế hoạch',
+  Assessed: 'Đã đánh giá',
+  Approved: 'Đã phê duyệt',
+  Blocked: 'Bị chặn',
+  'In-flight': 'Đang bay',
+  Completed: 'Hoàn thành',
+  Aborted: 'Hủy giữa chừng',
+  Closed: 'Đã đóng',
 }
 
 export const formatNumber = (n: number, digits = 1) => n.toFixed(digits)

@@ -5,6 +5,10 @@ export default {
   theme: {
     "extend": {
       "colors": {
+        "warning": "#d97706",
+        "warning-container": "#fffbeb",
+        "warning-outline": "#fde68a",
+        "on-warning-container": "#b45309",
         "primary-fixed": "#7ffc97",
         "outline": "#6e7b6c",
         "surface-container-high": "#dce9ff",

@@ -50,7 +50,7 @@ function ProfileSpecsPreview({ profile }: { profile: UavProfile }) {
 
 function DroneForm({ drone }: { drone?: Drone }) {
   const navigate = useNavigate()
-  const { profiles, drones, getProfile, createDrone, updateDrone, heldMissionsOf, notify } = useFleet()
+  const { profiles, drones, getProfile, createDrone, updateDrone, affectedMissions, batteriesOf, notify } = useFleet()
   const isEdit = !!drone
   const firstActive = profiles.find((p) => p.status === 'active')
   const [name, setName] = useState(drone?.name ?? '')
@@ -63,9 +63,11 @@ function DroneForm({ drone }: { drone?: Drone }) {
   const profile = getProfile(profileId)
   const oldProfile = drone ? getProfile(drone.profileId) : undefined
   const profileChanged = isEdit && profileId !== drone.profileId
-  // Only active profiles can be chosen; keep the drone's current one listed even if it was retired
-  const options = profiles.filter((p) => p.status === 'active' || p.id === drone?.profileId)
-  const held = drone ? heldMissionsOf(drone.id) : []
+  // Retired profiles never appear in the dropdown
+  const options = profiles.filter((p) => p.status === 'active')
+  const held = drone ? affectedMissions([drone.id]) : []
+  const attachedCount = drone ? batteriesOf(drone.id).length : 0
+  const inMission = drone?.status === 'in-mission'
 
   const errors: Record<string, string | undefined> = {
     name: name.trim() ? undefined : 'Bắt buộc nhập tên drone',
@@ -81,12 +83,12 @@ function DroneForm({ drone }: { drone?: Drone }) {
   const persist = () => {
     if (drone) {
       updateDrone(drone.id, { name: name.trim(), profileId, note: note.trim() })
-      notify(`Đã lưu thay đổi cho ${name.trim()}`)
+      notify(profileChanged && held.length > 0 ? `Đã lưu ${name.trim()} và thông báo Mission Manager chạy lại DSS` : `Đã lưu thay đổi cho ${name.trim()}`)
       navigate(`/drones/${drone.id}`)
     } else {
       const created = createDrone({ name: name.trim(), serial: serial.trim(), profileId, note: note.trim() })
       notify(`Đã thêm ${created.name} ở trạng thái Unavailable`)
-      navigate(`/drones/${created.id}`)
+      navigate('/drones')
     }
   }
 
@@ -97,7 +99,7 @@ function DroneForm({ drone }: { drone?: Drone }) {
     else persist()
   }
 
-  const batteryMatches = drone && profile ? drone.batteries.length === profile.batteriesPerDrone : true
+  const batteryMatches = drone && profile ? attachedCount === profile.batteriesPerDrone : true
 
   return (
     <>
@@ -143,7 +145,13 @@ function DroneForm({ drone }: { drone?: Drone }) {
                 htmlFor="profile"
                 required
                 error={show('profile')}
-                hint={isEdit ? 'Chỉ đổi UAV Profile khi khai báo nhầm dòng drone' : 'Chỉ hiển thị UAV Profile đang hoạt động'}
+                hint={
+                  inMission
+                    ? 'Không thể đổi UAV Profile khi drone đang In-mission'
+                    : isEdit
+                      ? 'Chỉ đổi UAV Profile khi khai báo nhầm dòng drone'
+                      : 'Chỉ hiển thị UAV Profile đang hoạt động'
+                }
                 aside={
                   profileChanged &&
                   oldProfile &&
@@ -158,6 +166,7 @@ function DroneForm({ drone }: { drone?: Drone }) {
                   id="profile"
                   value={profileId}
                   onChange={setProfileId}
+                  disabled={inMission}
                   placeholder="Chọn UAV Profile"
                   options={options.map((p) => ({ value: p.id, label: profileLabel(p) }))}
                 />
@@ -171,8 +180,8 @@ function DroneForm({ drone }: { drone?: Drone }) {
                 >
                   <Icon name={batteryMatches ? 'check_circle' : 'warning'} filled={batteryMatches} />
                   {batteryMatches
-                    ? `Bộ pin hiện tại ${drone.batteries.length}/${profile.batteriesPerDrone} khớp số pin trên một drone của ${profile.model}`
-                    : `Bộ pin hiện tại ${drone.batteries.length}/${profile.batteriesPerDrone} chưa khớp số pin trên một drone của ${profile.model}`}
+                    ? `Bộ pin hiện tại ${attachedCount}/${profile.batteriesPerDrone} khớp số pin trên một drone của ${profile.model}`
+                    : `Bộ pin hiện tại ${attachedCount}/${profile.batteriesPerDrone} chưa khớp số pin trên một drone của ${profile.model}`}
                 </div>
               )}
               <Field label={isEdit ? 'Ghi chú' : 'Ghi chú (không bắt buộc)'} htmlFor="note">
@@ -191,7 +200,7 @@ function DroneForm({ drone }: { drone?: Drone }) {
 
         <div className="lg:sticky lg:top-24 lg:col-span-4">
           {isEdit ? (
-            <div className="rounded-xl bg-secondary-container/60 p-space-lg shadow-sm">
+            <div className="rounded-xl bg-warning-container p-space-lg shadow-sm ring-1 ring-warning-outline">
               <p className="mb-space-sm flex items-center gap-space-sm font-title-md text-title-md">
                 <Icon name="warning" filled /> Lưu ý đổi UAV Profile
               </p>

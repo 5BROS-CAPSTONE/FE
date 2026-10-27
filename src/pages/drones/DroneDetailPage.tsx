@@ -6,7 +6,7 @@ import PageHeading from '../../components/PageHeading'
 import { DroneStatusBadge } from '../../components/StatusBadge'
 import { useFleet } from '../../store/fleetContext'
 import type { DroneStatus } from '../../types'
-import { droneStatusLabel, formatDate, formatDateTime, missionStateLabel } from '../../utils/format'
+import { droneStatusLabel, formatDate, formatDateTime, missionStatusLabel } from '../../utils/format'
 import ComingSoonPage from '../ComingSoonPage'
 import DroneActionDialog, { type DroneAction } from './DroneActionDialog'
 
@@ -14,7 +14,7 @@ const chipClass: Record<DroneStatus | 'new', string> = {
   new: 'bg-secondary-container text-on-secondary-fixed-variant',
   available: 'bg-primary-fixed text-on-primary-fixed-variant',
   'in-mission': 'bg-tertiary-fixed text-on-tertiary-fixed',
-  unavailable: 'bg-surface-container-high text-on-surface-variant',
+  unavailable: 'bg-warning-container text-on-warning-container',
   retired: 'bg-surface-container text-outline',
 }
 
@@ -35,13 +35,14 @@ function Card({ icon, title, aside, children }: { icon: string; title: string; a
 export default function DroneDetailPage() {
   const { id = '' } = useParams()
   const navigate = useNavigate()
-  const { getDrone, getProfile, missions } = useFleet()
+  const { getDrone, getProfile, missions, batteriesOf } = useFleet()
   const [action, setAction] = useState<DroneAction | null>(null)
   const drone = getDrone(id)
   if (!drone) return <ComingSoonPage title="Không tìm thấy drone" />
 
   const profile = getProfile(drone.profileId)
   const required = profile?.batteriesPerDrone ?? 1
+  const attached = batteriesOf(drone.id)
   const held = missions.filter((m) => m.droneId === drone.id)
   const retired = drone.status === 'retired'
 
@@ -87,6 +88,7 @@ export default function DroneDetailPage() {
                 </Link>,
               ],
               ['Ngày thêm', formatDate(drone.addedAt)],
+              ...(drone.status === 'unavailable' && drone.unavailableReason ? [['Lý do Unavailable', drone.unavailableReason]] : []),
               ['Ghi chú', drone.note ? drone.note : <span className="italic text-on-surface-variant">Không có ghi chú</span>],
             ].map(([label, value], i) => (
               <div key={label as string} className={`flex items-center justify-between gap-4 rounded-lg px-space-sm py-3 ${i % 2 === 0 ? 'bg-surface-container-low/60' : ''}`}>
@@ -103,15 +105,15 @@ export default function DroneDetailPage() {
           aside={
             <span
               className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 font-label-sm text-label-sm font-semibold ${
-                drone.batteries.length >= required ? 'bg-primary-fixed text-on-primary-fixed-variant' : 'bg-error-container text-on-error-container'
+                attached.length >= required ? 'bg-primary-fixed text-on-primary-fixed-variant' : 'bg-error-container text-on-error-container'
               }`}
             >
-              <Icon name={drone.batteries.length >= required ? 'check_circle' : 'error'} size={14} />
-              {drone.batteries.length}/{required} pin theo UAV Profile
+              <Icon name={attached.length >= required ? 'check_circle' : 'error'} size={14} />
+              {attached.length}/{required} pin theo UAV Profile
             </span>
           }
         >
-          {drone.batteries.length === 0 ? (
+          {attached.length === 0 ? (
             <p className="rounded-lg bg-surface-container-low p-space-md text-on-surface-variant">Chưa gắn pin cho drone này.</p>
           ) : (
             <div className="overflow-x-auto">
@@ -124,7 +126,7 @@ export default function DroneDetailPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {drone.batteries.map((b) => (
+                  {attached.map((b) => (
                     <tr key={b.code} className="h-12">
                       <td className="px-space-sm">
                         <span className="flex items-center gap-2 whitespace-nowrap font-mono font-semibold">
@@ -132,7 +134,7 @@ export default function DroneDetailPage() {
                         </span>
                       </td>
                       <td className="px-space-sm font-title-sm text-title-sm">{b.capacityAh} Ah</td>
-                      <td className="px-space-sm text-right">{formatDate(b.attachedAt)}</td>
+                      <td className="px-space-sm text-right">{b.attachedAt ? formatDate(b.attachedAt) : '–'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -159,9 +161,16 @@ export default function DroneDetailPage() {
                       </p>
                     </div>
                   </div>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-tertiary-fixed px-2.5 py-1 font-label-md text-label-md text-on-tertiary-fixed">
-                    <Icon name="task_alt" size={16} /> {missionStateLabel[m.state]}
-                  </span>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-tertiary-fixed px-2.5 py-1 font-label-md text-label-md text-on-tertiary-fixed">
+                      <Icon name={m.status === 'In-flight' ? 'flight_takeoff' : 'task_alt'} size={16} /> {missionStatusLabel[m.status]}
+                    </span>
+                    {m.assessment?.status === 'STALE' && (
+                      <span className="rounded-full bg-warning-container px-2.5 py-1 font-label-md text-label-md text-on-warning-container ring-1 ring-warning-outline">
+                        Đánh giá STALE
+                      </span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

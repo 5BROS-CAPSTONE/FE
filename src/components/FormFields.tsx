@@ -72,16 +72,18 @@ interface SelectProps {
   options: { value: string; label: string }[]
   error?: string
   placeholder?: string
+  disabled?: boolean
 }
 
-export function Select({ id, value, onChange, options, error, placeholder }: SelectProps) {
+export function Select({ id, value, onChange, options, error, placeholder, disabled }: SelectProps) {
   return (
     <div className="relative">
       <select
         id={id}
         value={value}
+        disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
-        className={`${inputClass(error)} cursor-pointer appearance-none pr-9`}
+        className={`${inputClass(error)} cursor-pointer appearance-none pr-9 disabled:cursor-not-allowed disabled:opacity-60`}
       >
         {placeholder && <option value="">{placeholder}</option>}
         {options.map((o) => (
