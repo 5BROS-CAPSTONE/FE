@@ -1,14 +1,14 @@
 import { useState, type ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import Button from '../../components/Button'
-import Icon from '../../components/Icon'
-import PageHeading from '../../components/PageHeading'
-import { DroneStatusBadge } from '../../components/StatusBadge'
-import { useFleet } from '../../store/fleetContext'
-import type { DroneStatus } from '../../types'
-import { droneStatusLabel, formatDate, formatDateTime, missionStatusLabel } from '../../utils/format'
-import ComingSoonPage from '../ComingSoonPage'
-import DroneActionDialog, { type DroneAction } from './DroneActionDialog'
+import Button from '@/components/ui/Button'
+import Icon from '@/components/ui/Icon'
+import PageHeading from '@/components/ui/PageHeading'
+import { DroneStatusBadge } from '@/components/ui/StatusBadge'
+import { useFleet } from '@/store/fleetContext'
+import type { DroneStatus } from '@/types'
+import { droneStatusLabel, formatDate, formatDateTime, missionStatusLabel } from '@/utils/format'
+import NotFoundPage from '@/pages/NotFoundPage'
+import DroneActionDialog, { type DroneAction } from '@/features/drones/components/DroneActionDialog'
 
 const chipClass: Record<DroneStatus | 'new', string> = {
   new: 'bg-secondary-container text-on-secondary-fixed-variant',
@@ -18,7 +18,17 @@ const chipClass: Record<DroneStatus | 'new', string> = {
   retired: 'bg-surface-container text-outline',
 }
 
-function Card({ icon, title, aside, children }: { icon: string; title: string; aside?: ReactNode; children: ReactNode }) {
+function Card({
+  icon,
+  title,
+  aside,
+  children,
+}: {
+  icon: string
+  title: string
+  aside?: ReactNode
+  children: ReactNode
+}) {
   return (
     <section className="rounded-xl bg-surface-container-lowest p-space-md shadow-sm md:p-space-lg">
       <div className="mb-space-md flex items-center justify-between gap-2">
@@ -38,7 +48,7 @@ export default function DroneDetailPage() {
   const { getDrone, getProfile, missions, batteriesOf } = useFleet()
   const [action, setAction] = useState<DroneAction | null>(null)
   const drone = getDrone(id)
-  if (!drone) return <ComingSoonPage title="Không tìm thấy drone" />
+  if (!drone) return <NotFoundPage title="Không tìm thấy drone" />
 
   const profile = getProfile(drone.profileId)
   const required = profile?.batteriesPerDrone ?? 1
@@ -83,15 +93,26 @@ export default function DroneDetailPage() {
               ['Serial', <span className="font-mono font-semibold">{drone.serial}</span>],
               [
                 'UAV Profile',
-                <Link to={`/uav-profiles/${drone.profileId}`} className="inline-flex items-center gap-1 font-title-sm text-title-sm text-primary hover:underline">
+                <Link
+                  to={`/uav-profiles/${drone.profileId}`}
+                  className="inline-flex items-center gap-1 font-title-sm text-title-sm text-primary hover:underline"
+                >
                   {profile?.model} – v{profile?.version} <Icon name="open_in_new" size={16} />
                 </Link>,
               ],
               ['Ngày thêm', formatDate(drone.addedAt)],
-              ...(drone.status === 'unavailable' && drone.unavailableReason ? [['Lý do Unavailable', drone.unavailableReason]] : []),
-              ['Ghi chú', drone.note ? drone.note : <span className="italic text-on-surface-variant">Không có ghi chú</span>],
+              ...(drone.status === 'unavailable' && drone.unavailableReason
+                ? [['Lý do Unavailable', drone.unavailableReason]]
+                : []),
+              [
+                'Ghi chú',
+                drone.note ? drone.note : <span className="italic text-on-surface-variant">Không có ghi chú</span>,
+              ],
             ].map(([label, value], i) => (
-              <div key={label as string} className={`flex items-center justify-between gap-4 rounded-lg px-space-sm py-3 ${i % 2 === 0 ? 'bg-surface-container-low/60' : ''}`}>
+              <div
+                key={label as string}
+                className={`flex items-center justify-between gap-4 rounded-lg px-space-sm py-3 ${i % 2 === 0 ? 'bg-surface-container-low/60' : ''}`}
+              >
                 <dt className="font-label-md text-label-md text-on-surface-variant">{label}</dt>
                 <dd className="text-right">{value}</dd>
               </div>
@@ -105,7 +126,9 @@ export default function DroneDetailPage() {
           aside={
             <span
               className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 font-label-sm text-label-sm font-semibold ${
-                attached.length >= required ? 'bg-primary-fixed text-on-primary-fixed-variant' : 'bg-error-container text-on-error-container'
+                attached.length >= required
+                  ? 'bg-primary-fixed text-on-primary-fixed-variant'
+                  : 'bg-error-container text-on-error-container'
               }`}
             >
               <Icon name={attached.length >= required ? 'check_circle' : 'error'} size={14} />
@@ -114,7 +137,9 @@ export default function DroneDetailPage() {
           }
         >
           {attached.length === 0 ? (
-            <p className="rounded-lg bg-surface-container-low p-space-md text-on-surface-variant">Chưa gắn pin cho drone này.</p>
+            <p className="rounded-lg bg-surface-container-low p-space-md text-on-surface-variant">
+              Chưa gắn pin cho drone này.
+            </p>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left">
@@ -145,11 +170,16 @@ export default function DroneDetailPage() {
 
         <Card icon="event_upcoming" title="Nhiệm vụ đang giữ chỗ">
           {held.length === 0 ? (
-            <p className="rounded-lg bg-surface-container-low p-space-md text-on-surface-variant">Không có nhiệm vụ nào giữ chỗ drone.</p>
+            <p className="rounded-lg bg-surface-container-low p-space-md text-on-surface-variant">
+              Không có nhiệm vụ nào giữ chỗ drone.
+            </p>
           ) : (
             <div className="flex flex-col gap-space-sm">
               {held.map((m) => (
-                <div key={m.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-surface-container-low p-space-md">
+                <div
+                  key={m.id}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-surface-container-low p-space-md"
+                >
                   <div className="flex items-center gap-space-md">
                     <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-surface-container-lowest text-tertiary">
                       <Icon name="agriculture" />
@@ -163,7 +193,8 @@ export default function DroneDetailPage() {
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5">
                     <span className="inline-flex items-center gap-1 rounded-full bg-tertiary-fixed px-2.5 py-1 font-label-md text-label-md text-on-tertiary-fixed">
-                      <Icon name={m.status === 'In-flight' ? 'flight_takeoff' : 'task_alt'} size={16} /> {missionStatusLabel[m.status]}
+                      <Icon name={m.status === 'In-flight' ? 'flight_takeoff' : 'task_alt'} size={16} />{' '}
+                      {missionStatusLabel[m.status]}
                     </span>
                     {m.assessment?.status === 'STALE' && (
                       <span className="rounded-full bg-warning-container px-2.5 py-1 font-label-md text-label-md text-on-warning-container ring-1 ring-warning-outline">
@@ -180,7 +211,9 @@ export default function DroneDetailPage() {
         <Card
           icon="history"
           title="Lịch sử trạng thái"
-          aside={<span className="font-label-md text-label-md text-on-surface-variant">{drone.history.length} bản ghi</span>}
+          aside={
+            <span className="font-label-md text-label-md text-on-surface-variant">{drone.history.length} bản ghi</span>
+          }
         >
           <ol className="relative flex flex-col gap-space-md border-l-2 border-surface-container pl-space-md">
             {drone.history.map((h, i) => (
@@ -193,12 +226,18 @@ export default function DroneDetailPage() {
                 <div className="flex flex-col gap-2 rounded-lg bg-surface-container-low p-space-sm">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span className="text-on-surface-variant">{formatDateTime(h.at)}</span>
-                    <span className="rounded bg-surface-container-lowest px-2 py-0.5 font-label-md text-label-md">{h.by}</span>
+                    <span className="rounded bg-surface-container-lowest px-2 py-0.5 font-label-md text-label-md">
+                      {h.by}
+                    </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`rounded px-2 py-0.5 font-label-md text-label-md ${chipClass[h.from]}`}>{droneStatusLabel[h.from]}</span>
+                    <span className={`rounded px-2 py-0.5 font-label-md text-label-md ${chipClass[h.from]}`}>
+                      {droneStatusLabel[h.from]}
+                    </span>
                     <Icon name="arrow_forward" size={16} className="text-on-surface-variant" />
-                    <span className={`rounded px-2 py-0.5 font-label-md text-label-md ${chipClass[h.to]}`}>{droneStatusLabel[h.to]}</span>
+                    <span className={`rounded px-2 py-0.5 font-label-md text-label-md ${chipClass[h.to]}`}>
+                      {droneStatusLabel[h.to]}
+                    </span>
                   </div>
                   <p className="flex items-center gap-1 text-on-surface-variant">
                     <Icon name="chat_bubble" size={16} /> Lý do: “{h.reason}”

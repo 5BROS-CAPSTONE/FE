@@ -1,4 +1,4 @@
-import type { DroneStatus, MissionStatus } from '../types'
+import type { DroneStatus, MissionStatus } from '@/types'
 
 const pad = (n: number) => String(n).padStart(2, '0')
 

@@ -1,4 +1,4 @@
-import type { ProfileSpecs } from '../../types'
+import type { ProfileSpecs } from '@/types'
 
 export type NumericKey = Exclude<keyof ProfileSpecs, 'manufacturer' | 'model'>
 
@@ -15,14 +15,41 @@ export const numericFields: Record<NumericKey, NumericField> = {
   emptyWeightKg: { key: 'emptyWeightKg', label: 'Khối lượng rỗng', unit: 'kg', icon: 'scale', required: true },
   maxPayloadKg: { key: 'maxPayloadKg', label: 'Tải trọng tối đa', unit: 'kg', icon: 'scale', required: true },
   mtowKg: { key: 'mtowKg', label: 'Khối lượng cất cánh tối đa – MTOW', unit: 'kg', icon: 'scale', required: true },
-  batteryCapacityAh: { key: 'batteryCapacityAh', label: 'Dung lượng pin', unit: 'Ah', icon: 'battery_charging_full', required: true },
-  batteryEnergyWh: { key: 'batteryEnergyWh', label: 'Năng lượng pin', unit: 'Wh', icon: 'battery_charging_full', required: false, step: '1' },
-  batteriesPerDrone: { key: 'batteriesPerDrone', label: 'Số pin trên một drone', unit: 'cái', icon: 'battery_charging_full', required: true, step: '1' },
+  batteryCapacityAh: {
+    key: 'batteryCapacityAh',
+    label: 'Dung lượng pin',
+    unit: 'Ah',
+    icon: 'battery_charging_full',
+    required: true,
+  },
+  batteryEnergyWh: {
+    key: 'batteryEnergyWh',
+    label: 'Năng lượng pin',
+    unit: 'Wh',
+    icon: 'battery_charging_full',
+    required: false,
+    step: '1',
+  },
+  batteriesPerDrone: {
+    key: 'batteriesPerDrone',
+    label: 'Số pin trên một drone',
+    unit: 'cái',
+    icon: 'battery_charging_full',
+    required: true,
+    step: '1',
+  },
   maxWindMs: { key: 'maxWindMs', label: 'Sức chịu gió tối đa', unit: 'm/s', icon: 'air', required: true },
   minTempC: { key: 'minTempC', label: 'Nhiệt độ tối thiểu', unit: '°C', icon: 'thermostat', required: true, step: '1' },
   maxTempC: { key: 'maxTempC', label: 'Nhiệt độ tối đa', unit: '°C', icon: 'thermostat', required: true, step: '1' },
   maxSpeedMs: { key: 'maxSpeedMs', label: 'Tốc độ bay tối đa', unit: 'm/s', icon: 'speed', required: true },
-  maxFlightTimeMin: { key: 'maxFlightTimeMin', label: 'Thời gian bay tối đa', unit: 'phút', icon: 'schedule', required: true, step: '0.5' },
+  maxFlightTimeMin: {
+    key: 'maxFlightTimeMin',
+    label: 'Thời gian bay tối đa',
+    unit: 'phút',
+    icon: 'schedule',
+    required: true,
+    step: '0.5',
+  },
 }
 
 export type FormValues = Record<keyof ProfileSpecs, string>

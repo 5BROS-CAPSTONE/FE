@@ -1,15 +1,24 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import Button from '../../components/Button'
-import { EmptyRow, IconButton, RowMenu, TableCard, TableFooter, Th, theadRowClass, type MenuItem } from '../../components/DataTable'
-import Icon from '../../components/Icon'
-import PageHeading from '../../components/PageHeading'
-import StatCard from '../../components/StatCard'
-import { DroneStatusBadge, VersionTag } from '../../components/StatusBadge'
-import { useFleet } from '../../store/fleetContext'
-import type { Drone, DroneStatus } from '../../types'
-import { formatDate, droneStatusLabel } from '../../utils/format'
-import DroneActionDialog, { type DroneAction } from './DroneActionDialog'
+import Button from '@/components/ui/Button'
+import {
+  EmptyRow,
+  IconButton,
+  RowMenu,
+  TableCard,
+  TableFooter,
+  Th,
+  theadRowClass,
+  type MenuItem,
+} from '@/components/ui/DataTable'
+import Icon from '@/components/ui/Icon'
+import PageHeading from '@/components/ui/PageHeading'
+import StatCard from '@/components/ui/StatCard'
+import { DroneStatusBadge, VersionTag } from '@/components/ui/StatusBadge'
+import { useFleet } from '@/store/fleetContext'
+import type { Drone, DroneStatus } from '@/types'
+import { formatDate, droneStatusLabel } from '@/utils/format'
+import DroneActionDialog, { type DroneAction } from '@/features/drones/components/DroneActionDialog'
 
 const statusIconColor: Record<DroneStatus, string> = {
   available: 'text-primary-container',
@@ -59,10 +68,30 @@ export default function DroneListPage() {
       />
 
       <div className="mb-space-lg grid grid-cols-1 gap-space-md sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Available / Sẵn sàng" value={count('available')} icon="check_circle" iconClass="bg-surface-container-low text-primary-container" />
-        <StatCard label="In-mission / Đang làm nhiệm vụ" value={count('in-mission')} icon="flight_takeoff" iconClass="bg-tertiary-fixed text-tertiary" />
-        <StatCard label="Unavailable / Không khả dụng" value={count('unavailable')} icon="pause_circle" iconClass="bg-warning-container text-warning" />
-        <StatCard label="Ngưng sử dụng" value={count('retired')} icon="do_not_disturb_on" iconClass="bg-surface-container text-outline" />
+        <StatCard
+          label="Available / Sẵn sàng"
+          value={count('available')}
+          icon="check_circle"
+          iconClass="bg-surface-container-low text-primary-container"
+        />
+        <StatCard
+          label="In-mission / Đang làm nhiệm vụ"
+          value={count('in-mission')}
+          icon="flight_takeoff"
+          iconClass="bg-tertiary-fixed text-tertiary"
+        />
+        <StatCard
+          label="Unavailable / Không khả dụng"
+          value={count('unavailable')}
+          icon="pause_circle"
+          iconClass="bg-warning-container text-warning"
+        />
+        <StatCard
+          label="Ngưng sử dụng"
+          value={count('retired')}
+          icon="do_not_disturb_on"
+          iconClass="bg-surface-container text-outline"
+        />
       </div>
 
       <div className="mb-space-lg flex flex-col justify-between gap-space-md rounded-xl bg-surface-container-lowest p-space-md shadow-sm md:flex-row md:items-center">
@@ -81,13 +110,19 @@ export default function DroneListPage() {
             onChange={(v) => setStatus(v as DroneStatus | '')}
             options={[
               { value: '', label: 'Trạng thái: Tất cả' },
-              ...(['available', 'in-mission', 'unavailable', 'retired'] as const).map((s) => ({ value: s, label: droneStatusLabel[s] })),
+              ...(['available', 'in-mission', 'unavailable', 'retired'] as const).map((s) => ({
+                value: s,
+                label: droneStatusLabel[s],
+              })),
             ]}
           />
           <FilterSelect
             value={profileFilter}
             onChange={setProfileFilter}
-            options={[{ value: '', label: 'UAV Profile: Tất cả' }, ...profiles.map((p) => ({ value: p.id, label: p.model }))]}
+            options={[
+              { value: '', label: 'UAV Profile: Tất cả' },
+              ...profiles.map((p) => ({ value: p.id, label: p.model })),
+            ]}
           />
         </div>
         <button
@@ -166,13 +201,23 @@ export default function DroneListPage() {
                 </td>
                 <td className="px-space-md py-2 text-right">
                   <div className="inline-flex items-center justify-end gap-1">
-                    <IconButton icon="visibility" title="Xem chi tiết" muted={retired} onClick={() => navigate(`/drones/${d.id}`)} />
+                    <IconButton
+                      icon="visibility"
+                      title="Xem chi tiết"
+                      muted={retired}
+                      onClick={() => navigate(`/drones/${d.id}`)}
+                    />
                     {!retired && (
                       <>
                         <IconButton icon="edit" title="Chỉnh sửa" onClick={() => navigate(`/drones/${d.id}/edit`)} />
                         {d.status === 'in-mission' ? (
                           // Status actions are blocked while flying; the dimmed ⋮ explains why
-                          <IconButton icon="more_vert" title="Không thể thay đổi trạng thái" muted onClick={() => setPending({ drone: d, action: 'unavailable' })} />
+                          <IconButton
+                            icon="more_vert"
+                            title="Không thể thay đổi trạng thái"
+                            muted
+                            onClick={() => setPending({ drone: d, action: 'unavailable' })}
+                          />
                         ) : (
                           <RowMenu items={menuFor(d)} />
                         )}
@@ -211,7 +256,11 @@ function FilterSelect({ value, onChange, options }: FilterSelectProps) {
           </option>
         ))}
       </select>
-      <Icon name="expand_more" size={18} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+      <Icon
+        name="expand_more"
+        size={18}
+        className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant"
+      />
     </div>
   )
 }

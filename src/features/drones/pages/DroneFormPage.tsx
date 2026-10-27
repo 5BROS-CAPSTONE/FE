@@ -1,22 +1,22 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import Button from '../../components/Button'
-import { Field, FormActionBar, SectionCard, Select } from '../../components/FormFields'
-import { inputClass } from '../../components/inputClass'
-import Icon from '../../components/Icon'
-import Modal, { InfoNote, ModalSectionLabel } from '../../components/Modal'
-import PageHeading from '../../components/PageHeading'
-import { DroneStatusBadge } from '../../components/StatusBadge'
-import { useFleet } from '../../store/fleetContext'
-import type { Drone, UavProfile } from '../../types'
-import { formatDate, formatNumber } from '../../utils/format'
-import ComingSoonPage from '../ComingSoonPage'
+import Button from '@/components/ui/Button'
+import { Field, FormActionBar, SectionCard, Select } from '@/components/ui/FormFields'
+import { inputClass } from '@/components/ui/inputClass'
+import Icon from '@/components/ui/Icon'
+import Modal, { InfoNote, ModalSectionLabel } from '@/components/ui/Modal'
+import PageHeading from '@/components/ui/PageHeading'
+import { DroneStatusBadge } from '@/components/ui/StatusBadge'
+import { useFleet } from '@/store/fleetContext'
+import type { Drone, UavProfile } from '@/types'
+import { formatDate, formatNumber } from '@/utils/format'
+import NotFoundPage from '@/pages/NotFoundPage'
 
 export default function DroneFormPage() {
   const { id } = useParams()
   const { getDrone } = useFleet()
   const drone = id ? getDrone(id) : undefined
-  if (id && !drone) return <ComingSoonPage title="Không tìm thấy drone" />
+  if (id && !drone) return <NotFoundPage title="Không tìm thấy drone" />
   return <DroneForm key={id ?? 'new'} drone={drone} />
 }
 
@@ -36,7 +36,10 @@ function ProfileSpecsPreview({ profile }: { profile: UavProfile }) {
       </p>
       <div className="grid grid-cols-1 gap-space-sm sm:grid-cols-2">
         {specs.map(([icon, label, value]) => (
-          <div key={label} className="flex items-center justify-between gap-2 rounded-lg bg-surface-container-lowest px-space-md py-space-sm shadow-sm">
+          <div
+            key={label}
+            className="flex items-center justify-between gap-2 rounded-lg bg-surface-container-lowest px-space-md py-space-sm shadow-sm"
+          >
             <span className="flex items-center gap-2 text-on-surface-variant">
               <Icon name={icon} size={16} /> {label}:
             </span>
@@ -83,7 +86,11 @@ function DroneForm({ drone }: { drone?: Drone }) {
   const persist = () => {
     if (drone) {
       updateDrone(drone.id, { name: name.trim(), profileId, note: note.trim() })
-      notify(profileChanged && held.length > 0 ? `Đã lưu ${name.trim()} và thông báo Mission Manager chạy lại DSS` : `Đã lưu thay đổi cho ${name.trim()}`)
+      notify(
+        profileChanged && held.length > 0
+          ? `Đã lưu ${name.trim()} và thông báo Mission Manager chạy lại DSS`
+          : `Đã lưu thay đổi cho ${name.trim()}`,
+      )
       navigate(`/drones/${drone.id}`)
     } else {
       const created = createDrone({ name: name.trim(), serial: serial.trim(), profileId, note: note.trim() })
@@ -107,11 +114,15 @@ function DroneForm({ drone }: { drone?: Drone }) {
         crumbs={[
           { label: 'Đội drone' },
           { label: 'Danh sách drone', to: '/drones' },
-          ...(drone ? [{ label: drone.name, to: `/drones/${drone.id}` }, { label: 'Chỉnh sửa' }] : [{ label: 'Thêm drone' }]),
+          ...(drone
+            ? [{ label: drone.name, to: `/drones/${drone.id}` }, { label: 'Chỉnh sửa' }]
+            : [{ label: 'Thêm drone' }]),
         ]}
         title={drone ? `Chỉnh sửa drone ${drone.name}` : 'Thêm drone'}
         badge={drone && <DroneStatusBadge status={drone.status} />}
-        subtitle={drone ? 'Cập nhật thông tin định danh và cấu hình dòng drone' : 'Nhập thông tin drone vật lý mới vào đội bay'}
+        subtitle={
+          drone ? 'Cập nhật thông tin định danh và cấu hình dòng drone' : 'Nhập thông tin drone vật lý mới vào đội bay'
+        }
       />
 
       <div className="grid grid-cols-1 items-start gap-gutter-desktop pb-28 lg:grid-cols-12">
@@ -121,16 +132,37 @@ function DroneForm({ drone }: { drone?: Drone }) {
               {isEdit ? (
                 <Field label="Serial" htmlFor="serial" hint="Không thể sửa serial">
                   <div className="relative">
-                    <input id="serial" value={serial} readOnly className={`${inputClass()} cursor-not-allowed pr-10 font-mono text-on-surface-variant`} />
-                    <Icon name="lock" size={18} className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+                    <input
+                      id="serial"
+                      value={serial}
+                      readOnly
+                      className={`${inputClass()} cursor-not-allowed pr-10 font-mono text-on-surface-variant`}
+                    />
+                    <Icon
+                      name="lock"
+                      size={18}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant"
+                    />
                   </div>
                 </Field>
               ) : null}
               <Field label="Tên drone" htmlFor="name" required error={show('name')}>
-                <input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ví dụ: T20P(4)" className={inputClass(show('name'))} />
+                <input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Ví dụ: T20P(4)"
+                  className={inputClass(show('name'))}
+                />
               </Field>
               {!isEdit && (
-                <Field label="Serial" htmlFor="serial" required hint="Serial không được trùng với drone đã có" error={show('serial')}>
+                <Field
+                  label="Serial"
+                  htmlFor="serial"
+                  required
+                  hint="Serial không được trùng với drone đã có"
+                  error={show('serial')}
+                >
                   <input
                     id="serial"
                     value={serial}
@@ -157,7 +189,8 @@ function DroneForm({ drone }: { drone?: Drone }) {
                   oldProfile &&
                   profile && (
                     <span className="inline-flex items-center gap-1 rounded-md bg-secondary-container px-2 py-1 font-label-sm text-label-sm text-on-secondary-fixed-variant">
-                      <Icon name="swap_horiz" size={14} /> Đã thay đổi: {profileLabel(oldProfile)} → {profileLabel(profile)}
+                      <Icon name="swap_horiz" size={14} /> Đã thay đổi: {profileLabel(oldProfile)} →{' '}
+                      {profileLabel(profile)}
                     </span>
                   )
                 }
@@ -175,7 +208,9 @@ function DroneForm({ drone }: { drone?: Drone }) {
               {profile && drone && profileChanged && (
                 <div
                   className={`flex items-center gap-space-sm rounded-lg p-space-md font-label-lg text-label-lg ${
-                    batteryMatches ? 'bg-surface-container-low text-primary' : 'bg-error-container/60 text-on-error-container'
+                    batteryMatches
+                      ? 'bg-surface-container-low text-primary'
+                      : 'bg-error-container/60 text-on-error-container'
                   }`}
                 >
                   <Icon name={batteryMatches ? 'check_circle' : 'warning'} filled={batteryMatches} />
@@ -217,8 +252,8 @@ function DroneForm({ drone }: { drone?: Drone }) {
               <div>
                 <p className="font-title-md text-title-md">Lưu ý</p>
                 <p className="text-on-surface-variant">
-                  Drone mới được lưu ở trạng thái Unavailable vì chưa gắn pin. Gắn pin tại mục Pin, sau đó dùng Mở lại để chuyển drone sang
-                  Available.
+                  Drone mới được lưu ở trạng thái Unavailable vì chưa gắn pin. Gắn pin tại mục Pin, sau đó dùng Mở lại
+                  để chuyển drone sang Available.
                 </p>
               </div>
             </div>
@@ -272,18 +307,25 @@ function DroneForm({ drone }: { drone?: Drone }) {
               <ModalSectionLabel>Đánh giá bị ảnh hưởng ({held.length})</ModalSectionLabel>
               <ul className="flex flex-col gap-2">
                 {held.map((m) => (
-                  <li key={m.id} className="flex items-center justify-between gap-2 rounded-xl bg-surface-container-low p-3">
+                  <li
+                    key={m.id}
+                    className="flex items-center justify-between gap-2 rounded-xl bg-surface-container-low p-3"
+                  >
                     <span className="flex items-center gap-2">
-                      <Icon name="assignment_late" size={18} className="text-on-surface-variant" /> {m.name} – {formatDate(m.date)}
+                      <Icon name="assignment_late" size={18} className="text-on-surface-variant" /> {m.name} –{' '}
+                      {formatDate(m.date)}
                     </span>
-                    <span className="rounded-md bg-secondary-container px-2 py-0.5 font-label-sm text-label-sm text-on-secondary-container">Sẽ STALE</span>
+                    <span className="rounded-md bg-secondary-container px-2 py-0.5 font-label-sm text-label-sm text-on-secondary-container">
+                      Sẽ STALE
+                    </span>
                   </li>
                 ))}
               </ul>
             </div>
           )}
           <InfoNote>
-            Drone vẫn dùng được nên nhiệm vụ giữ nguyên drone.{held.length > 0 ? ' Mission Manager cần chạy lại đánh giá khả thi.' : ''}
+            Drone vẫn dùng được nên nhiệm vụ giữ nguyên drone.
+            {held.length > 0 ? ' Mission Manager cần chạy lại đánh giá khả thi.' : ''}
           </InfoNote>
         </Modal>
       )}

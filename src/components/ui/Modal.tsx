@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from 'react'
-import Icon from './Icon'
+import Icon from '@/components/ui/Icon'
 
 type Tone = 'warning' | 'info' | 'error'
 

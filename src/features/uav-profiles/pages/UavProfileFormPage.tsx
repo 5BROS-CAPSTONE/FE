@@ -1,16 +1,16 @@
 import { useState, type ReactNode } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import Button from '../../components/Button'
-import { Field, FormActionBar, NumberInput, SectionCard, Select } from '../../components/FormFields'
-import { inputClass } from '../../components/inputClass'
-import Icon from '../../components/Icon'
-import Modal, { InfoNote, ModalSectionLabel } from '../../components/Modal'
-import PageHeading from '../../components/PageHeading'
-import { MANUFACTURERS } from '../../mocks/data'
-import { useFleet } from '../../store/fleetContext'
-import type { ProfileSpecs, UavProfile } from '../../types'
-import { formatDate } from '../../utils/format'
-import ComingSoonPage from '../ComingSoonPage'
+import Button from '@/components/ui/Button'
+import { Field, FormActionBar, NumberInput, SectionCard, Select } from '@/components/ui/FormFields'
+import { inputClass } from '@/components/ui/inputClass'
+import Icon from '@/components/ui/Icon'
+import Modal, { InfoNote, ModalSectionLabel } from '@/components/ui/Modal'
+import PageHeading from '@/components/ui/PageHeading'
+import { MANUFACTURERS } from '@/mocks/data'
+import { useFleet } from '@/store/fleetContext'
+import type { ProfileSpecs, UavProfile } from '@/types'
+import { formatDate } from '@/utils/format'
+import NotFoundPage from '@/pages/NotFoundPage'
 import {
   emptyForm,
   numericFields,
@@ -20,14 +20,14 @@ import {
   validate,
   type FormValues,
   type NumericKey,
-} from './profileFields'
+} from '@/features/uav-profiles/profileFields'
 
 /** 'view' shows a profile read-only; a retired profile can only be viewed. */
 export default function UavProfileFormPage({ view = false }: { view?: boolean }) {
   const { id } = useParams()
   const { getProfile } = useFleet()
   const profile = id ? getProfile(id) : undefined
-  if (id && !profile) return <ComingSoonPage title="Không tìm thấy UAV Profile" />
+  if (id && !profile) return <NotFoundPage title="Không tìm thấy UAV Profile" />
   const viewing = view || profile?.status === 'retired'
   // Remount when switching profiles or modes so the form state resets
   return <ProfileForm key={`${id ?? 'new'}-${viewing}`} profile={profile} viewing={viewing} />
@@ -50,7 +50,9 @@ function ProfileForm({ profile, viewing }: { profile?: UavProfile; viewing: bool
   const set = (k: keyof ProfileSpecs) => (v: string) => setValues((s) => ({ ...s, [k]: v }))
 
   const changedKeys = (Object.keys(values) as (keyof ProfileSpecs)[]).filter((k) =>
-    numericFields[k as NumericKey] ? Number(values[k]) !== Number(original[k]) || (values[k] === '') !== (original[k] === '') : values[k] !== original[k],
+    numericFields[k as NumericKey]
+      ? Number(values[k]) !== Number(original[k]) || (values[k] === '') !== (original[k] === '')
+      : values[k] !== original[k],
   )
   const affected = profile ? affectedMissions(activeDronesOf(profile.id).map((d) => d.id)) : []
   const filledRequired = requiredKeys.filter((k) => values[k].trim() !== '').length
@@ -76,7 +78,9 @@ function ProfileForm({ profile, viewing }: { profile?: UavProfile; viewing: bool
 
   const confirmVersion = () => {
     if (!profile) return
-    const labels = changedKeys.map((k) => (k === 'model' ? 'tên model' : k === 'manufacturer' ? 'hãng' : numericFields[k as NumericKey].label.toLowerCase()))
+    const labels = changedKeys.map((k) =>
+      k === 'model' ? 'tên model' : k === 'manufacturer' ? 'hãng' : numericFields[k as NumericKey].label.toLowerCase(),
+    )
     updateProfile(profile.id, toSpecs(values), `Sửa ${labels.join(', ')}`)
     notify(
       affected.length > 0
@@ -120,7 +124,13 @@ function ProfileForm({ profile, viewing }: { profile?: UavProfile; viewing: bool
           ...(profile ? [{ label: profile.model, to: `/uav-profiles/${profile.id}` }] : []),
           ...(viewing ? [] : [{ label: isEdit ? 'Chỉnh sửa' : 'Tạo mới' }]),
         ]}
-        title={!profile ? 'Tạo UAV Profile' : viewing ? `UAV Profile – ${profile.model}` : `Chỉnh sửa UAV Profile – ${profile.model}`}
+        title={
+          !profile
+            ? 'Tạo UAV Profile'
+            : viewing
+              ? `UAV Profile – ${profile.model}`
+              : `Chỉnh sửa UAV Profile – ${profile.model}`
+        }
         actions={
           viewing &&
           !retired &&
@@ -171,7 +181,11 @@ function ProfileForm({ profile, viewing }: { profile?: UavProfile; viewing: bool
       <div className={`grid grid-cols-1 items-start gap-gutter-desktop lg:grid-cols-12 ${viewing ? '' : 'pb-28'}`}>
         {/* A disabled fieldset locks every input in view mode */}
         <fieldset disabled={viewing} className="flex min-w-0 flex-col gap-space-lg lg:col-span-8">
-          <SectionCard icon="badge" title="1. Định danh" subtitle="Thông tin thương hiệu và tên gọi thương mại chính thức">
+          <SectionCard
+            icon="badge"
+            title="1. Định danh"
+            subtitle="Thông tin thương hiệu và tên gọi thương mại chính thức"
+          >
             <div className="grid grid-cols-1 gap-space-md md:grid-cols-2">
               <Field label="Hãng sản xuất" htmlFor="manufacturer" required error={errorOf('manufacturer')}>
                 <Select
@@ -181,7 +195,13 @@ function ProfileForm({ profile, viewing }: { profile?: UavProfile; viewing: bool
                   options={MANUFACTURERS.map((m) => ({ value: m, label: m }))}
                 />
               </Field>
-              <Field label="Tên model" htmlFor="model" required hint="Không trùng với dòng đã có" error={errorOf('model')}>
+              <Field
+                label="Tên model"
+                htmlFor="model"
+                required
+                hint="Không trùng với dòng đã có"
+                error={errorOf('model')}
+              >
                 <input
                   id="model"
                   value={values.model}
@@ -193,7 +213,11 @@ function ProfileForm({ profile, viewing }: { profile?: UavProfile; viewing: bool
             </div>
           </SectionCard>
 
-          <SectionCard icon="scale" title="2. Khối lượng" subtitle="Trọng lượng rỗng, trọng lượng tải danh định và ngưỡng an toàn MTOW">
+          <SectionCard
+            icon="scale"
+            title="2. Khối lượng"
+            subtitle="Trọng lượng rỗng, trọng lượng tải danh định và ngưỡng an toàn MTOW"
+          >
             <div className="grid grid-cols-1 gap-space-md md:grid-cols-2">
               {numberField('emptyWeightKg')}
               {numberField('mtowKg')}
@@ -201,7 +225,11 @@ function ProfileForm({ profile, viewing }: { profile?: UavProfile; viewing: bool
             </div>
           </SectionCard>
 
-          <SectionCard icon="battery_charging_full" title="3. Pin" subtitle="Thông số bộ lưu trữ năng lượng và định mức đóng gói">
+          <SectionCard
+            icon="battery_charging_full"
+            title="3. Pin"
+            subtitle="Thông số bộ lưu trữ năng lượng và định mức đóng gói"
+          >
             <div className="grid grid-cols-1 gap-space-md md:grid-cols-3">
               {numberField('batteryCapacityAh')}
               {numberField('batteryEnergyWh', 'Không bắt buộc – để trống nếu datasheet không công bố')}
@@ -209,7 +237,11 @@ function ProfileForm({ profile, viewing }: { profile?: UavProfile; viewing: bool
             </div>
           </SectionCard>
 
-          <SectionCard icon="cloud" title="4. Giới hạn môi trường" subtitle="Điều kiện thời tiết cực đoan cho phép cất cánh an toàn">
+          <SectionCard
+            icon="cloud"
+            title="4. Giới hạn môi trường"
+            subtitle="Điều kiện thời tiết cực đoan cho phép cất cánh an toàn"
+          >
             <div className="grid grid-cols-1 gap-space-md md:grid-cols-3">
               {numberField('maxWindMs')}
               {numberField('minTempC')}
@@ -226,7 +258,11 @@ function ProfileForm({ profile, viewing }: { profile?: UavProfile; viewing: bool
         </fieldset>
 
         <div className="flex flex-col gap-space-md lg:sticky lg:top-24 lg:col-span-4">
-          {profile ? <VersionHistory profile={profile} /> : <CreateSummary values={values} progress={progress} filled={filledRequired} />}
+          {profile ? (
+            <VersionHistory profile={profile} />
+          ) : (
+            <CreateSummary values={values} progress={progress} filled={filledRequired} />
+          )}
         </div>
       </div>
 
@@ -235,12 +271,15 @@ function ProfileForm({ profile, viewing }: { profile?: UavProfile; viewing: bool
           status={
             isEdit ? (
               <span className="flex items-center gap-space-sm font-title-sm text-title-sm text-on-surface">
-                <Icon name="layers" size={18} className="text-primary" /> Phiên bản dự kiến: <span className="text-primary">v{nextVersion}</span>
+                <Icon name="layers" size={18} className="text-primary" /> Phiên bản dự kiến:{' '}
+                <span className="text-primary">v{nextVersion}</span>
               </span>
             ) : (
               <>
                 <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-primary" />
-                {progress === 100 ? 'Trạng thái: Sẵn sàng tạo hồ sơ tiêu chuẩn v1' : `Đã nhập ${filledRequired}/${requiredKeys.length} trường bắt buộc`}
+                {progress === 100
+                  ? 'Trạng thái: Sẵn sàng tạo hồ sơ tiêu chuẩn v1'
+                  : `Đã nhập ${filledRequired}/${requiredKeys.length} trường bắt buộc`}
               </>
             )
           }
@@ -276,10 +315,16 @@ function ProfileForm({ profile, viewing }: { profile?: UavProfile; viewing: bool
                 return (
                   <li key={k} className="flex flex-wrap items-center gap-2 font-body-md text-body-md">
                     <Icon name={f?.icon ?? 'badge'} size={18} className="text-on-surface-variant" />
-                    <span className="text-on-surface-variant">{f?.label ?? (k === 'model' ? 'Tên model' : 'Hãng sản xuất')}:</span>
-                    <span className="line-through decoration-outline">{original[k] || '–'} {f?.unit}</span>
+                    <span className="text-on-surface-variant">
+                      {f?.label ?? (k === 'model' ? 'Tên model' : 'Hãng sản xuất')}:
+                    </span>
+                    <span className="line-through decoration-outline">
+                      {original[k] || '–'} {f?.unit}
+                    </span>
                     <Icon name="arrow_forward" size={16} className="text-on-surface-variant" />
-                    <span className="font-semibold text-primary">{values[k] || '–'} {f?.unit}</span>
+                    <span className="font-semibold text-primary">
+                      {values[k] || '–'} {f?.unit}
+                    </span>
                   </li>
                 )
               })}
@@ -290,7 +335,10 @@ function ProfileForm({ profile, viewing }: { profile?: UavProfile; viewing: bool
               <ModalSectionLabel>Các đánh giá DSS sau sẽ chuyển STALE</ModalSectionLabel>
               <ul className="flex flex-col gap-2">
                 {affected.map((m) => (
-                  <li key={m.id} className="flex items-center justify-between gap-2 rounded-xl bg-surface-container-low p-3">
+                  <li
+                    key={m.id}
+                    className="flex items-center justify-between gap-2 rounded-xl bg-surface-container-low p-3"
+                  >
                     <span className="flex items-center gap-2">
                       <Icon name="schedule" size={18} className="text-on-surface-variant" />
                       {m.name} – {formatDate(m.date)} – {m.droneId && getDrone(m.droneId)?.name}
@@ -315,7 +363,11 @@ function CreateSummary({ values, progress, filled }: { values: FormValues; progr
     ['Dòng', `${values.manufacturer} ${values.model}`.trim()],
     ['MTOW', values.mtowKg && `${values.mtowKg} kg`],
     ['Tải trọng', values.maxPayloadKg && `${values.maxPayloadKg} kg`],
-    ['Số pin trên một drone', values.batteriesPerDrone && `${values.batteriesPerDrone} cái${values.batteryCapacityAh ? ` (${values.batteryCapacityAh} Ah)` : ''}`],
+    [
+      'Số pin trên một drone',
+      values.batteriesPerDrone &&
+        `${values.batteriesPerDrone} cái${values.batteryCapacityAh ? ` (${values.batteryCapacityAh} Ah)` : ''}`,
+    ],
     ['Gió tối đa', values.maxWindMs && `${values.maxWindMs} m/s`],
     ['Thời gian bay', values.maxFlightTimeMin && `${values.maxFlightTimeMin} phút`],
   ]
@@ -337,7 +389,10 @@ function CreateSummary({ values, progress, filled }: { values: FormValues; progr
             <span className="font-bold text-primary">{progress}%</span>
           </div>
           <div className="h-2 w-full overflow-hidden rounded-full bg-surface-container">
-            <div className="h-full rounded-full bg-primary transition-all duration-300" style={{ width: `${progress}%` }} />
+            <div
+              className="h-full rounded-full bg-primary transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
           </div>
           <div className="mt-1 flex items-center gap-1 font-label-sm text-label-sm text-primary">
             <Icon name={progress === 100 ? 'check_circle' : 'pending'} size={16} />
@@ -345,10 +400,15 @@ function CreateSummary({ values, progress, filled }: { values: FormValues; progr
           </div>
         </div>
         <div className="flex flex-col gap-space-sm">
-          <span className="font-label-sm text-label-sm uppercase tracking-wider text-secondary">Thông số chính cấu hình</span>
+          <span className="font-label-sm text-label-sm uppercase tracking-wider text-secondary">
+            Thông số chính cấu hình
+          </span>
           <div className="flex flex-wrap gap-2">
             {chips.map(([label, value]) => (
-              <div key={label} className="flex items-center gap-1.5 rounded bg-surface-container-low px-2.5 py-1.5 font-label-sm text-label-sm">
+              <div
+                key={label}
+                className="flex items-center gap-1.5 rounded bg-surface-container-low px-2.5 py-1.5 font-label-sm text-label-sm"
+              >
                 <span className="text-secondary">{label}:</span>
                 <span className={`font-semibold ${label === 'Dòng' ? 'text-primary' : ''}`}>{value || '–'}</span>
               </div>
@@ -376,7 +436,9 @@ function VersionHistory({ profile }: { profile: UavProfile }) {
         <h3 className="flex items-center gap-space-xs font-title-md text-title-md">
           <Icon name="history" className="text-primary" /> Lịch sử version
         </h3>
-        <span className="font-label-sm text-label-sm uppercase text-on-surface-variant">{profile.versions.length} phiên bản</span>
+        <span className="font-label-sm text-label-sm uppercase text-on-surface-variant">
+          {profile.versions.length} phiên bản
+        </span>
       </div>
       <ol className="relative flex flex-col gap-space-md border-l-2 border-surface-container pl-space-md">
         {profile.versions.map((v, i) => (
@@ -390,7 +452,9 @@ function VersionHistory({ profile }: { profile: UavProfile }) {
               <div className="flex items-center justify-between">
                 <span className="font-title-sm text-title-sm">v{v.version}</span>
                 {i === 0 && (
-                  <span className="rounded-full bg-primary-fixed px-2 py-0.5 font-label-sm text-label-sm text-on-primary-fixed-variant">Hiện hành</span>
+                  <span className="rounded-full bg-primary-fixed px-2 py-0.5 font-label-sm text-label-sm text-on-primary-fixed-variant">
+                    Hiện hành
+                  </span>
                 )}
               </div>
               <p className="flex items-center gap-1 font-body-sm text-body-sm text-on-surface-variant">

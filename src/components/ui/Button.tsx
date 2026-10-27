@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes } from 'react'
-import Icon from './Icon'
+import Icon from '@/components/ui/Icon'
 
 type Variant = 'primary' | 'secondary' | 'outline' | 'danger-outline' | 'danger'
 

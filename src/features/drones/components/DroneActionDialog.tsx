@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Button from '../../components/Button'
-import Icon from '../../components/Icon'
-import Modal, { InfoNote, ModalSectionLabel } from '../../components/Modal'
-import { DroneStatusBadge, EffectTag } from '../../components/StatusBadge'
-import { useFleet, type ReopenResult } from '../../store/fleetContext'
-import type { Drone, Mission } from '../../types'
-import { formatDate, missionStatusLabel } from '../../utils/format'
+import Button from '@/components/ui/Button'
+import Icon from '@/components/ui/Icon'
+import Modal, { InfoNote, ModalSectionLabel } from '@/components/ui/Modal'
+import { DroneStatusBadge, EffectTag } from '@/components/ui/StatusBadge'
+import { useFleet, type ReopenResult } from '@/store/fleetContext'
+import type { Drone, Mission } from '@/types'
+import { formatDate, missionStatusLabel } from '@/utils/format'
 
 export type DroneAction = 'unavailable' | 'reopen' | 'retire'
 
@@ -97,7 +97,10 @@ function UnavailableDialog({ drone, onClose }: { drone: Drone; onClose: () => vo
       }
     >
       <div className="flex flex-col">
-        <label htmlFor="reason" className="mb-1.5 font-label-sm text-label-sm font-semibold uppercase tracking-wider text-on-surface-variant">
+        <label
+          htmlFor="reason"
+          className="mb-1.5 font-label-sm text-label-sm font-semibold uppercase tracking-wider text-on-surface-variant"
+        >
           Lý do *
         </label>
         <textarea
@@ -111,14 +114,16 @@ function UnavailableDialog({ drone, onClose }: { drone: Drone; onClose: () => vo
             touched && missing ? 'ring-1 ring-error focus:ring-error' : 'focus:ring-primary-container'
           }`}
         />
-        <span className={`mt-1 font-body-sm text-body-sm ${touched && missing ? 'text-error' : 'text-on-surface-variant'}`}>
+        <span
+          className={`mt-1 font-body-sm text-body-sm ${touched && missing ? 'text-error' : 'text-on-surface-variant'}`}
+        >
           Bắt buộc nhập lý do
         </span>
       </div>
       <ReleasedMissions missions={affected} title="Nhiệm vụ bị ảnh hưởng" />
       <InfoNote>
-        {affected.length > 0 ? 'Mission Manager sẽ nhận thông báo để chọn drone khác. ' : ''}Sửa xong, dùng Mở lại để đưa drone về
-        Available.
+        {affected.length > 0 ? 'Mission Manager sẽ nhận thông báo để chọn drone khác. ' : ''}Sửa xong, dùng Mở lại để
+        đưa drone về Available.
       </InfoNote>
     </Modal>
   )
@@ -156,8 +161,8 @@ function ReopenDialog({ drone, onClose }: { drone: Drone; onClose: () => void })
           <div>
             <p className="font-title-sm text-title-sm">Không đủ điều kiện mở lại</p>
             <p className="font-body-sm text-body-sm">
-              Bộ pin {result.attached}/{result.required} – chưa đủ số pin trên một drone theo UAV Profile {profile?.model} – v
-              {profile?.version}.
+              Bộ pin {result.attached}/{result.required} – chưa đủ số pin trên một drone theo UAV Profile{' '}
+              {profile?.model} – v{profile?.version}.
             </p>
           </div>
         </div>

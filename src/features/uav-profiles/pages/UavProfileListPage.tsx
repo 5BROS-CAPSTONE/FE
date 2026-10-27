@@ -1,15 +1,15 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Button from '../../components/Button'
-import { EmptyRow, IconButton, TableCard, TableFooter, Th, theadRowClass } from '../../components/DataTable'
-import Icon from '../../components/Icon'
-import Modal from '../../components/Modal'
-import PageHeading from '../../components/PageHeading'
-import StatCard from '../../components/StatCard'
-import { DroneStatusBadge, ProfileStatusBadge, VersionTag } from '../../components/StatusBadge'
-import { useFleet } from '../../store/fleetContext'
-import type { UavProfile } from '../../types'
-import { formatDateTime, formatNumber } from '../../utils/format'
+import Button from '@/components/ui/Button'
+import { EmptyRow, IconButton, TableCard, TableFooter, Th, theadRowClass } from '@/components/ui/DataTable'
+import Icon from '@/components/ui/Icon'
+import Modal from '@/components/ui/Modal'
+import PageHeading from '@/components/ui/PageHeading'
+import StatCard from '@/components/ui/StatCard'
+import { DroneStatusBadge, ProfileStatusBadge, VersionTag } from '@/components/ui/StatusBadge'
+import { useFleet } from '@/store/fleetContext'
+import type { UavProfile } from '@/types'
+import { formatDateTime, formatNumber } from '@/utils/format'
 
 type Tab = 'all' | 'active' | 'retired'
 
@@ -48,7 +48,11 @@ export default function UavProfileListPage() {
         subtitle="Hồ sơ thông số theo dòng drone – dùng cho luật an toàn và ước tính năng lượng"
         actions={
           <>
-            <Button variant="outline" icon="download" onClick={() => notify('Chức năng xuất Excel sẽ nối với API báo cáo')}>
+            <Button
+              variant="outline"
+              icon="download"
+              onClick={() => notify('Chức năng xuất Excel sẽ nối với API báo cáo')}
+            >
               Xuất báo cáo (Excel)
             </Button>
             <Button icon="add" onClick={() => navigate('/uav-profiles/new')}>
@@ -75,7 +79,9 @@ export default function UavProfileListPage() {
           value={assignedDrones}
           icon="flight_takeoff"
           iconClass="bg-tertiary-fixed text-tertiary"
-          footer={<span className="font-label-md text-label-md text-on-surface-variant">Tổng thiết bị gán profile</span>}
+          footer={
+            <span className="font-label-md text-label-md text-on-surface-variant">Tổng thiết bị gán profile</span>
+          }
         />
       </div>
 
@@ -103,7 +109,11 @@ export default function UavProfileListPage() {
                 </option>
               ))}
             </select>
-            <Icon name="expand_more" size={18} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant" />
+            <Icon
+              name="expand_more"
+              size={18}
+              className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant"
+            />
           </div>
           <button
             type="button"
@@ -130,12 +140,16 @@ export default function UavProfileListPage() {
               type="button"
               onClick={() => setTab(key)}
               className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 font-label-md text-label-md transition-colors ${
-                tab === key ? 'bg-surface-container-lowest font-semibold text-primary shadow-sm' : 'text-on-surface-variant hover:text-on-surface'
+                tab === key
+                  ? 'bg-surface-container-lowest font-semibold text-primary shadow-sm'
+                  : 'text-on-surface-variant hover:text-on-surface'
               }`}
             >
               {key === 'active' && tab === key && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
               {label}
-              <span className="rounded-full bg-surface-container px-1.5 font-label-sm text-label-sm">{counts[key]}</span>
+              <span className="rounded-full bg-surface-container px-1.5 font-label-sm text-label-sm">
+                {counts[key]}
+              </span>
             </button>
           ))}
         </div>
@@ -161,7 +175,10 @@ export default function UavProfileListPage() {
           {rows.map((p) => {
             const retired = p.status === 'retired'
             return (
-              <tr key={p.id} className={`h-14 transition-colors hover:bg-surface-container-low/70 ${retired ? 'opacity-60' : ''}`}>
+              <tr
+                key={p.id}
+                className={`h-14 transition-colors hover:bg-surface-container-low/70 ${retired ? 'opacity-60' : ''}`}
+              >
                 <td className="px-space-md py-2">
                   <div className="flex items-center gap-space-sm font-title-sm text-title-sm">
                     <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-surface-container-low text-primary-container">
@@ -193,13 +210,23 @@ export default function UavProfileListPage() {
                 <td className="px-space-md py-2">
                   <ProfileStatusBadge active={!retired} />
                 </td>
-                <td className="whitespace-nowrap px-space-md py-2 text-on-surface-variant">{formatDateTime(p.updatedAt)}</td>
+                <td className="whitespace-nowrap px-space-md py-2 text-on-surface-variant">
+                  {formatDateTime(p.updatedAt)}
+                </td>
                 <td className="px-space-md py-2 text-right">
                   <div className="inline-flex items-center gap-1">
-                    <IconButton icon="visibility" title="Xem chi tiết" onClick={() => navigate(`/uav-profiles/${p.id}`)} />
+                    <IconButton
+                      icon="visibility"
+                      title="Xem chi tiết"
+                      onClick={() => navigate(`/uav-profiles/${p.id}`)}
+                    />
                     {!retired && (
                       <>
-                        <IconButton icon="edit" title="Chỉnh sửa" onClick={() => navigate(`/uav-profiles/${p.id}/edit`)} />
+                        <IconButton
+                          icon="edit"
+                          title="Chỉnh sửa"
+                          onClick={() => navigate(`/uav-profiles/${p.id}/edit`)}
+                        />
                         <IconButton icon="block" title="Ngưng sử dụng" onClick={() => setRetiring(p)} />
                       </>
                     )}

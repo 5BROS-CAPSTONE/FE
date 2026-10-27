@@ -1,4 +1,4 @@
-import type { Battery, Drone, Mission, UavProfile } from '../types'
+import type { Battery, Drone, Mission, UavProfile } from '@/types'
 
 // Mock data matching the S1 handoff; specs come from "[5BROS] Danh Sach Thong So Drone".
 // "Today" for this data is 26/10/2026, so missions not flown yet are dated after it.
@@ -95,7 +95,13 @@ export const seedProfiles: UavProfile[] = [
 ]
 
 const SYSTEM = 'Hệ thống'
-const newDrone = (at: string) => ({ at, by: SYSTEM, from: 'new' as const, to: 'unavailable' as const, reason: 'Chưa gắn pin' })
+const newDrone = (at: string) => ({
+  at,
+  by: SYSTEM,
+  from: 'new' as const,
+  to: 'unavailable' as const,
+  reason: 'Chưa gắn pin',
+})
 const batteryReady = (at: string) => ({
   at,
   by: CURRENT_USER.name,
@@ -148,7 +154,13 @@ export const seedDrones: Drone[] = [
     addedAt: '2026-10-18T15:00:00',
     note: '',
     history: [
-      { at: '2026-10-26T06:30:00', by: SYSTEM, from: 'available', to: 'in-mission', reason: 'Operator xác nhận cất cánh – Phun ruộng B' },
+      {
+        at: '2026-10-26T06:30:00',
+        by: SYSTEM,
+        from: 'available',
+        to: 'in-mission',
+        reason: 'Operator xác nhận cất cánh – Phun ruộng B',
+      },
       batteryReady('2026-10-19T08:00:00'),
       newDrone('2026-10-18T15:00:00'),
     ],
@@ -163,7 +175,13 @@ export const seedDrones: Drone[] = [
     addedAt: '2026-10-18T15:10:00',
     note: '',
     history: [
-      { at: '2026-10-20T10:00:00', by: CURRENT_USER.name, from: 'available', to: 'unavailable', reason: 'Thay cánh quạt' },
+      {
+        at: '2026-10-20T10:00:00',
+        by: CURRENT_USER.name,
+        from: 'available',
+        to: 'unavailable',
+        reason: 'Thay cánh quạt',
+      },
       batteryReady('2026-10-19T08:10:00'),
       newDrone('2026-10-18T15:10:00'),
     ],

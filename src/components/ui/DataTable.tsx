@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import Icon from './Icon'
+import Icon from '@/components/ui/Icon'
 
 export function TableCard({ children, footer }: { children: ReactNode; footer: ReactNode }) {
   return (
@@ -29,13 +29,24 @@ export function TableFooter({ shown, total, unit }: { shown: number; total: numb
       <div className="flex items-center gap-space-md">
         <span className="font-body-sm text-body-sm text-on-surface-variant">10 / trang</span>
         <div className="flex items-center gap-1">
-          <button className="flex h-8 w-8 items-center justify-center rounded-lg text-on-surface-variant opacity-40" disabled type="button">
+          <button
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-on-surface-variant opacity-40"
+            disabled
+            type="button"
+          >
             <Icon name="chevron_left" size={18} />
           </button>
-          <button className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-container font-title-sm text-title-sm text-on-primary-container" type="button">
+          <button
+            className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-container font-title-sm text-title-sm text-on-primary-container"
+            type="button"
+          >
             1
           </button>
-          <button className="flex h-8 w-8 items-center justify-center rounded-lg text-on-surface-variant opacity-40" disabled type="button">
+          <button
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-on-surface-variant opacity-40"
+            disabled
+            type="button"
+          >
             <Icon name="chevron_right" size={18} />
           </button>
         </div>
@@ -121,7 +132,9 @@ export function RowMenu({ items, dimmed }: { items: MenuItem[]; dimmed?: boolean
                 item.onClick()
               }}
               className={`w-full px-3 py-1.5 text-left font-label-md text-label-md transition-colors ${
-                item.danger ? 'text-error hover:bg-error-container/40' : 'text-on-surface hover:bg-surface-container-low'
+                item.danger
+                  ? 'text-error hover:bg-error-container/40'
+                  : 'text-on-surface hover:bg-surface-container-low'
               }`}
             >
               {item.label}

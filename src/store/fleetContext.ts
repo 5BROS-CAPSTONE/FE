@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react'
-import type { Battery, Drone, Mission, MissionNotification, ProfileSpecs, UavProfile } from '../types'
+import type { Battery, Drone, Mission, MissionNotification, ProfileSpecs, UavProfile } from '@/types'
 
 export interface DroneInput {
   name: string

@@ -1,8 +1,8 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react'
-import { CURRENT_USER, seedBatteries, seedDrones, seedMissions, seedProfiles } from '../mocks/data'
-import type { Battery, Drone, DroneStatus, Mission, MissionNotification, ProfileSpecs, UavProfile } from '../types'
-import { nowIso } from '../utils/format'
-import { FleetContext, type FleetStore } from './fleetContext'
+import { CURRENT_USER, seedBatteries, seedDrones, seedMissions, seedProfiles } from '@/mocks/data'
+import type { Battery, Drone, DroneStatus, Mission, MissionNotification, ProfileSpecs, UavProfile } from '@/types'
+import { nowIso } from '@/utils/format'
+import { FleetContext, type FleetStore } from '@/store/fleetContext'
 
 const SYSTEM = 'Hệ thống'
 
@@ -105,7 +105,10 @@ export function FleetProvider({ children }: { children: ReactNode }) {
 
       // Never overwrites: a new version is created and old assessments keep referencing the old one (BR-04)
       updateProfile: (id, specs, note) => {
-        markStale(activeDronesOf(id).map((d) => d.id), true)
+        markStale(
+          activeDronesOf(id).map((d) => d.id),
+          true,
+        )
         const at = nowIso()
         setProfiles((list) =>
           list.map((p) =>
@@ -115,7 +118,10 @@ export function FleetProvider({ children }: { children: ReactNode }) {
                   ...specs,
                   version: p.version + 1,
                   updatedAt: at,
-                  versions: [{ version: p.version + 1, createdAt: at, createdBy: CURRENT_USER.name, note }, ...p.versions],
+                  versions: [
+                    { version: p.version + 1, createdAt: at, createdBy: CURRENT_USER.name, note },
+                    ...p.versions,
+                  ],
                 }
               : p,
           ),

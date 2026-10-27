@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
-import Icon from './Icon'
-import { inputClass } from './inputClass'
+import Icon from '@/components/ui/Icon'
+import { inputClass } from '@/components/ui/inputClass'
 
 interface FieldProps {
   label: string

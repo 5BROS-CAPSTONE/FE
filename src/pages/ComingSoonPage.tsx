@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
-import Icon from '../components/Icon'
-import PageHeading from '../components/PageHeading'
+import Icon from '@/components/ui/Icon'
+import PageHeading from '@/components/ui/PageHeading'
 
 // Placeholder for menu sections that have no Stitch screens yet
 export default function ComingSoonPage({ title }: { title: string }) {
