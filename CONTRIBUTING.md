@@ -3,15 +3,15 @@
 ## Nhánh
 
 - `main` luôn chạy được và build được. **Không push thẳng lên `main`**, mọi thay đổi đi qua Pull Request.
-- Mỗi chức năng một nhánh, tạo từ `main` mới nhất:
+- Mỗi thành viên có **một nhánh riêng mang tên mình** (ví dụ `quyen`) và push code của mình lên đúng nhánh đó.
+- Lần đầu, tạo nhánh của mình từ `main` (nếu nhánh đã có trên GitHub thì chỉ cần `git checkout <tên>`):
 
 ```bash
 git checkout main
 git pull
-git checkout -b feature/s2-gan-pin
+git checkout -b quyen
+git push -u origin quyen
 ```
-
-Đặt tên nhánh: `feature/<mã luồng>-<mô tả>` (ví dụ `feature/s2-gan-pin`), sửa lỗi dùng `fix/<mô tả>`, việc cấu hình dùng `chore/<mô tả>`.
 
 ## Commit
 
@@ -23,22 +23,42 @@ Theo dạng `loại(phạm vi): mô tả ngắn`, ví dụ:
 
 Loại thường dùng: `feat`, `fix`, `refactor`, `style`, `docs`, `chore`.
 
-## Trước khi mở Pull Request
+## Mỗi ngày làm việc
+
+Trước khi code, lấy phần mới của `main` về nhánh mình để không bị lệch xa:
 
 ```bash
-npm run format     # tự format
-npm run check      # typecheck + lint + format phải sạch
-npm run build
+git checkout quyen
+git pull                  # lấy code mới nhất của nhánh mình
 git fetch origin
-git rebase origin/main   # cập nhật theo main, xử lý xung đột nếu có
-git push -u origin feature/s2-gan-pin
+git merge origin/main     # cập nhật theo main, xử lý xung đột nếu có
 ```
 
-Mở PR vào `main`, điền mẫu mô tả có sẵn. CI trên GitHub sẽ tự chạy `npm run check` và `npm run build`; PR chỉ được merge khi CI xanh và có ít nhất một bạn review.
+Code xong một phần thì commit và push lên nhánh mình:
+
+```bash
+npm run format
+npm run check             # typecheck + lint + format phải sạch
+npm run build
+git add .
+git commit -m "feat(batteries): màn danh sách pin"
+git push
+```
+
+## Đưa code vào `main`
+
+1. Làm bước `git merge origin/main` ở trên, sửa hết xung đột rồi push.
+2. Trên GitHub mở Pull Request **từ nhánh của mình vào `main`**, điền mẫu mô tả có sẵn.
+3. CI tự chạy `npm run check` và `npm run build`. Chỉ merge khi CI **xanh** và GitHub báo **không có xung đột**; nên nhờ một bạn xem qua trước khi merge.
+   Khi bấm merge, chọn **"Create a merge commit"** (không chọn Squash/Rebase) để nhánh cá nhân và `main` giữ chung lịch sử, lần sau không bị xung đột giả.
+4. Merge xong vẫn tiếp tục làm trên nhánh của mình; lần sau nhớ `git merge origin/main` trước khi code tiếp.
+
+Không dùng `git push --force` trên nhánh của người khác hoặc trên `main`.
 
 ## Tránh xung đột
 
-- Mỗi người làm trong thư mục `src/features/<module>` của mình.
+- Mỗi người làm trên nhánh của mình và trong thư mục `src/features/<module>` mình phụ trách.
+- Merge `main` vào nhánh mình thường xuyên (ít nhất mỗi ngày làm việc); để càng lâu càng dễ xung đột.
 - File dùng chung (`src/app/routes.tsx`, `src/app/navigation.ts`, `src/types/index.ts`, `src/components/ui/*`) chỉ thêm dòng, hạn chế sửa dòng của người khác; sửa lớn thì báo nhóm trước.
 - Không commit `node_modules`, `dist`, file `.env` thật.
 - Dùng VS Code thì cài các extension được gợi ý (ESLint, Prettier, Tailwind CSS, EditorConfig) và bật "Format on Save".
