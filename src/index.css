@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-slate-50 font-sans text-secondary antialiased;
+@layer base {
+  body {
+    @apply bg-surface font-body-md text-body-md text-on-surface antialiased;
+    font-feature-settings: 'tnum';
+  }
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  line-height: 1;
+  user-select: none;
+}
+
+.icon-filled {
+  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
