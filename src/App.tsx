@@ -29,6 +29,7 @@ export default function App() {
             <Route index element={<Navigate to="/drones" replace />} />
             <Route path="uav-profiles" element={<UavProfileListPage />} />
             <Route path="uav-profiles/new" element={<UavProfileFormPage />} />
+            <Route path="uav-profiles/:id" element={<UavProfileFormPage view />} />
             <Route path="uav-profiles/:id/edit" element={<UavProfileFormPage />} />
             <Route path="drones" element={<DroneListPage />} />
             <Route path="drones/new" element={<DroneFormPage />} />

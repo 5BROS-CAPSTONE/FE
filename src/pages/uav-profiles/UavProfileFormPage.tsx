@@ -22,16 +22,18 @@ import {
   type NumericKey,
 } from './profileFields'
 
-export default function UavProfileFormPage() {
+/** 'view' shows a profile read-only; a retired profile can only be viewed. */
+export default function UavProfileFormPage({ view = false }: { view?: boolean }) {
   const { id } = useParams()
   const { getProfile } = useFleet()
   const profile = id ? getProfile(id) : undefined
   if (id && !profile) return <ComingSoonPage title="Không tìm thấy UAV Profile" />
-  // Remount when switching profiles so the form state resets
-  return <ProfileForm key={id ?? 'new'} profile={profile} />
+  const viewing = view || profile?.status === 'retired'
+  // Remount when switching profiles or modes so the form state resets
+  return <ProfileForm key={`${id ?? 'new'}-${viewing}`} profile={profile} viewing={viewing} />
 }
 
-function ProfileForm({ profile }: { profile?: UavProfile }) {
+function ProfileForm({ profile, viewing }: { profile?: UavProfile; viewing: boolean }) {
   const navigate = useNavigate()
   const { profiles, createProfile, updateProfile, affectedMissions, activeDronesOf, getDrone, notify } = useFleet()
   const isEdit = !!profile
@@ -85,7 +87,7 @@ function ProfileForm({ profile }: { profile?: UavProfile }) {
   }
 
   const changedBadge = (k: NumericKey) =>
-    isEdit && changedKeys.includes(k) ? (
+    isEdit && !viewing && changedKeys.includes(k) ? (
       <span className="inline-flex items-center gap-1 rounded-full bg-primary-fixed/70 px-2 py-0.5 font-label-sm text-label-sm text-on-primary-fixed-variant">
         <Icon name="edit" size={12} /> đã thay đổi: {original[k] || '–'} → {values[k] || '–'} {numericFields[k].unit}
       </span>
@@ -115,10 +117,19 @@ function ProfileForm({ profile }: { profile?: UavProfile }) {
         crumbs={[
           { label: 'Đội drone' },
           { label: 'UAV Profile', to: '/uav-profiles' },
-          ...(profile ? [{ label: profile.model, to: '/uav-profiles' }] : []),
-          { label: isEdit ? 'Chỉnh sửa' : 'Tạo mới' },
+          ...(profile ? [{ label: profile.model, to: `/uav-profiles/${profile.id}` }] : []),
+          ...(viewing ? [] : [{ label: isEdit ? 'Chỉnh sửa' : 'Tạo mới' }]),
         ]}
-        title={profile ? `Chỉnh sửa UAV Profile – ${profile.model}` : 'Tạo UAV Profile'}
+        title={!profile ? 'Tạo UAV Profile' : viewing ? `UAV Profile – ${profile.model}` : `Chỉnh sửa UAV Profile – ${profile.model}`}
+        actions={
+          viewing &&
+          !retired &&
+          profile && (
+            <Button icon="edit" onClick={() => navigate(`/uav-profiles/${profile.id}/edit`)}>
+              Chỉnh sửa
+            </Button>
+          )
+        }
         badge={
           profile && (
             <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary-container px-2.5 py-1 font-label-md text-label-md text-on-secondary-fixed-variant">
@@ -126,15 +137,21 @@ function ProfileForm({ profile }: { profile?: UavProfile }) {
             </span>
           )
         }
-        subtitle={isEdit ? undefined : 'Nhập thông số kỹ thuật chuẩn hóa từ tài liệu chính thức của nhà sản xuất'}
+        subtitle={
+          viewing
+            ? 'Thông số kỹ thuật theo datasheet của hãng (chỉ xem)'
+            : isEdit
+              ? undefined
+              : 'Nhập thông số kỹ thuật chuẩn hóa từ tài liệu chính thức của nhà sản xuất'
+        }
       />
 
       {retired && (
         <div className="mb-space-lg rounded-lg bg-surface-container p-space-md text-on-surface-variant">
-          Profile này đã ngưng sử dụng nên không thể tạo version mới.
+          Profile này đã ngưng sử dụng nên chỉ xem được, không thể tạo version mới.
         </div>
       )}
-      {isEdit && !retired && (
+      {isEdit && !viewing && (
         <div className="mb-space-lg flex items-start gap-space-md rounded-lg bg-warning-container p-space-md shadow-sm ring-1 ring-warning-outline">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-surface-container-lowest text-secondary">
             <Icon name="warning" />
@@ -151,8 +168,9 @@ function ProfileForm({ profile }: { profile?: UavProfile }) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 items-start gap-gutter-desktop pb-28 lg:grid-cols-12">
-        <div className="flex flex-col gap-space-lg lg:col-span-8">
+      <div className={`grid grid-cols-1 items-start gap-gutter-desktop lg:grid-cols-12 ${viewing ? '' : 'pb-28'}`}>
+        {/* A disabled fieldset locks every input in view mode */}
+        <fieldset disabled={viewing} className="flex min-w-0 flex-col gap-space-lg lg:col-span-8">
           <SectionCard icon="badge" title="1. Định danh" subtitle="Thông tin thương hiệu và tên gọi thương mại chính thức">
             <div className="grid grid-cols-1 gap-space-md md:grid-cols-2">
               <Field label="Hãng sản xuất" htmlFor="manufacturer" required error={errorOf('manufacturer')}>
@@ -205,34 +223,36 @@ function ProfileForm({ profile }: { profile?: UavProfile }) {
               {numberField('maxFlightTimeMin', 'Điều kiện không tải')}
             </div>
           </SectionCard>
-        </div>
+        </fieldset>
 
         <div className="flex flex-col gap-space-md lg:sticky lg:top-24 lg:col-span-4">
           {profile ? <VersionHistory profile={profile} /> : <CreateSummary values={values} progress={progress} filled={filledRequired} />}
         </div>
       </div>
 
-      <FormActionBar
-        status={
-          isEdit ? (
-            <span className="flex items-center gap-space-sm font-title-sm text-title-sm text-on-surface">
-              <Icon name="layers" size={18} className="text-primary" /> Phiên bản dự kiến: <span className="text-primary">v{nextVersion}</span>
-            </span>
-          ) : (
-            <>
-              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-primary" />
-              {progress === 100 ? 'Trạng thái: Sẵn sàng tạo hồ sơ tiêu chuẩn v1' : `Đã nhập ${filledRequired}/${requiredKeys.length} trường bắt buộc`}
-            </>
-          )
-        }
-      >
-        <Button variant="secondary" onClick={() => navigate('/uav-profiles')}>
-          Hủy
-        </Button>
-        <Button icon={isEdit ? 'upload' : 'check_circle'} onClick={save} disabled={retired}>
-          {isEdit ? 'Lưu thành version mới' : 'Lưu UAV Profile'}
-        </Button>
-      </FormActionBar>
+      {!viewing && (
+        <FormActionBar
+          status={
+            isEdit ? (
+              <span className="flex items-center gap-space-sm font-title-sm text-title-sm text-on-surface">
+                <Icon name="layers" size={18} className="text-primary" /> Phiên bản dự kiến: <span className="text-primary">v{nextVersion}</span>
+              </span>
+            ) : (
+              <>
+                <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-primary" />
+                {progress === 100 ? 'Trạng thái: Sẵn sàng tạo hồ sơ tiêu chuẩn v1' : `Đã nhập ${filledRequired}/${requiredKeys.length} trường bắt buộc`}
+              </>
+            )
+          }
+        >
+          <Button variant="secondary" onClick={() => navigate('/uav-profiles')}>
+            Hủy
+          </Button>
+          <Button icon={isEdit ? 'upload' : 'check_circle'} onClick={save}>
+            {isEdit ? 'Lưu thành version mới' : 'Lưu UAV Profile'}
+          </Button>
+        </FormActionBar>
+      )}
 
       {confirming && profile && (
         <Modal

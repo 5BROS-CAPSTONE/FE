@@ -196,7 +196,7 @@ export default function UavProfileListPage() {
                 <td className="whitespace-nowrap px-space-md py-2 text-on-surface-variant">{formatDateTime(p.updatedAt)}</td>
                 <td className="px-space-md py-2 text-right">
                   <div className="inline-flex items-center gap-1">
-                    <IconButton icon="visibility" title="Xem / chỉnh sửa" onClick={() => navigate(`/uav-profiles/${p.id}/edit`)} />
+                    <IconButton icon="visibility" title="Xem chi tiết" onClick={() => navigate(`/uav-profiles/${p.id}`)} />
                     {!retired && (
                       <>
                         <IconButton icon="edit" title="Chỉnh sửa" onClick={() => navigate(`/uav-profiles/${p.id}/edit`)} />

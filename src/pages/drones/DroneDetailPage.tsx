@@ -83,7 +83,7 @@ export default function DroneDetailPage() {
               ['Serial', <span className="font-mono font-semibold">{drone.serial}</span>],
               [
                 'UAV Profile',
-                <Link to={`/uav-profiles/${drone.profileId}/edit`} className="inline-flex items-center gap-1 font-title-sm text-title-sm text-primary hover:underline">
+                <Link to={`/uav-profiles/${drone.profileId}`} className="inline-flex items-center gap-1 font-title-sm text-title-sm text-primary hover:underline">
                   {profile?.model} – v{profile?.version} <Icon name="open_in_new" size={16} />
                 </Link>,
               ],
