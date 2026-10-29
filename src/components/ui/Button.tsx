@@ -16,11 +16,15 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   icon?: string
 }
 
-export default function Button({ variant = 'primary', icon, className = '', children, ...rest }: ButtonProps) {
+export default function Button({ variant = 'primary', icon, className = '', children, onClick, ...rest }: ButtonProps) {
   return (
     <button
       type="button"
-      className={`inline-flex h-10 items-center justify-center gap-space-xs rounded-lg px-space-md font-label-lg text-label-lg transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${className}`}
+      onClick={(event) => {
+        event.currentTarget.focus({ preventScroll: true })
+        onClick?.(event)
+      }}
+      className={`ui-button ui-button--${variant} inline-flex min-h-11 items-center justify-center gap-2 rounded-lg px-space-md font-label-lg text-label-lg disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${className}`}
       {...rest}
     >
       {icon && <Icon name={icon} size={18} />}

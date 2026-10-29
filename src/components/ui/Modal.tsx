@@ -1,4 +1,5 @@
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useId, useRef, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import Icon from '@/components/ui/Icon'
 
 type Tone = 'warning' | 'info' | 'error'
@@ -19,45 +20,82 @@ interface ModalProps {
 }
 
 export default function Modal({ title, description, tone = 'warning', onClose, children, footer }: ModalProps) {
+  const dialogRef = useRef<HTMLDialogElement>(null)
+  const titleId = useId()
+  const descriptionId = useId()
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+    const dialog = dialogRef.current
+    if (!dialog) return
+    const previous = document.activeElement as HTMLElement | null
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    dialog.showModal()
+    dialog.querySelector('button')?.focus()
+    return () => {
+      dialog.close()
+      document.body.style.overflow = previousOverflow
+      if (previous?.isConnected) previous.focus({ preventScroll: true })
+    }
+  }, [])
 
   const style = toneStyles[tone]
-  return (
-    <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-inverse-surface/50 p-4 backdrop-blur-md"
-      onMouseDown={(e) => e.target === e.currentTarget && onClose()}
+  return createPortal(
+    <dialog
+      ref={dialogRef}
+      className={`ui-dialog ui-dialog--${tone}`}
+      aria-modal="true"
+      aria-labelledby={titleId}
+      aria-describedby={description ? descriptionId : undefined}
+      onCancel={(event) => {
+        event.preventDefault()
+        onClose()
+      }}
+      onKeyDown={(event) => {
+        if (event.key !== 'Tab') return
+        const items = Array.from(
+          event.currentTarget.querySelectorAll<HTMLElement>(
+            'button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),a[href],[tabindex="0"]',
+          ),
+        ).filter((item) => item.getClientRects().length)
+        if (!items.length) return
+        event.preventDefault()
+        const index = items.indexOf(document.activeElement as HTMLElement)
+        items[(index + (event.shiftKey ? -1 : 1) + items.length) % items.length]?.focus()
+      }}
+      onMouseDown={(event) => {
+        if (event.target !== event.currentTarget) return
+        const box = event.currentTarget.getBoundingClientRect()
+        if (
+          event.clientX < box.left ||
+          event.clientX > box.right ||
+          event.clientY < box.top ||
+          event.clientY > box.bottom
+        )
+          onClose()
+      }}
     >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        className="relative flex max-h-[90vh] w-full max-w-lg flex-col gap-5 overflow-y-auto rounded-2xl bg-surface-container-lowest p-6 shadow-2xl"
-      >
-        <button
-          aria-label="Đóng"
-          className="absolute right-5 top-5 rounded-lg p-1 text-on-surface-variant transition-colors hover:bg-surface-container hover:text-on-surface"
-          type="button"
-          onClick={onClose}
-        >
+      <div className="ui-dialog-content">
+        <button aria-label="Đóng" className="ui-dialog-close" type="button" onClick={onClose}>
           <Icon name="close" />
         </button>
-        <div className="flex items-start gap-4">
-          <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${style.box}`}>
+        <div className="ui-dialog-header">
+          <div className={`ui-dialog-tone ${style.box}`}>
             <Icon name={style.icon} size={28} />
           </div>
-          <div className="flex flex-col gap-1 pr-6">
-            <h2 className="font-headline-sm text-headline-sm tracking-tight text-on-surface">{title}</h2>
-            {description && <p className="font-body-md text-body-md text-on-surface-variant">{description}</p>}
+          <div className="min-w-0 flex-1">
+            <h2 id={titleId}>{title}</h2>
+            {description && (
+              <div id={descriptionId} className="ui-dialog-description">
+                {description}
+              </div>
+            )}
           </div>
         </div>
-        {children && <div className="flex flex-col gap-4">{children}</div>}
-        <div className="flex flex-wrap items-center justify-end gap-3 pt-3">{footer}</div>
+        {children && <div className="ui-dialog-body">{children}</div>}
+        <div className="ui-dialog-footer">{footer}</div>
       </div>
-    </div>
+    </dialog>,
+    document.body,
   )
 }
 

@@ -226,22 +226,42 @@ export default function TicketForm() {
       )}
       <Panel title="Thông tin phiếu yêu cầu">
         <form className="space-y-5 p-5" onSubmit={(event) => save(event, true)}>
-          <div>
-            <label className={labelClass} htmlFor="request-type">
-              Loại phiếu yêu cầu *
-            </label>
-            <select
-              id="request-type"
-              className={inputClass}
-              value={type}
-              disabled={!!existing}
-              onChange={(event) => chooseType(event.target.value as TicketType | '')}
-            >
-              <option value="">Chọn loại phiếu yêu cầu</option>
-              <option value="FIELD_REQUEST">Phiếu yêu cầu chỉnh sửa khu vực canh tác</option>
-              <option value="MISSION_REQUEST">Phiếu yêu cầu nhiệm vụ</option>
-            </select>
-          </div>
+          <fieldset disabled={!!existing} className="request-type-fieldset">
+            <legend className={labelClass}>Loại phiếu yêu cầu *</legend>
+            <div className="request-type-options">
+              {(
+                [
+                  {
+                    value: 'FIELD_REQUEST',
+                    label: 'Phiếu yêu cầu chỉnh sửa khu vực canh tác',
+                    description: 'Thêm mới, chỉnh sửa hoặc ngưng sử dụng cánh đồng.',
+                  },
+                  {
+                    value: 'MISSION_REQUEST',
+                    label: 'Phiếu yêu cầu nhiệm vụ',
+                    description: 'Gửi mục tiêu, cánh đồng và ngày thực hiện mong muốn.',
+                  },
+                ] as const
+              ).map((option) => (
+                <label
+                  key={option.value}
+                  className={`request-type-option ${type === option.value ? 'is-selected' : ''}`}
+                >
+                  <input
+                    type="radio"
+                    name="request-type"
+                    value={option.value}
+                    checked={type === option.value}
+                    onChange={() => chooseType(option.value)}
+                  />
+                  <span>
+                    <strong>{option.label}</strong>
+                    <small>{option.description}</small>
+                  </span>
+                </label>
+              ))}
+            </div>
+          </fieldset>
           {type === 'MISSION_REQUEST' ? (
             <>
               <div className="flex gap-2 border-b border-outline-variant/40 pb-3">

@@ -11,7 +11,7 @@ interface StatCardProps {
 
 export default function StatCard({ label, value, icon, iconClass, footer }: StatCardProps) {
   return (
-    <div className="flex items-center justify-between gap-space-sm rounded-xl bg-surface-container-lowest p-space-md shadow-sm">
+    <div className="ui-stat flex min-w-0 items-center justify-between gap-space-sm rounded-xl bg-surface-container-lowest p-space-md">
       <div className="flex min-w-0 flex-col gap-1">
         <span className="font-label-sm text-label-sm uppercase tracking-wider text-on-surface-variant">{label}</span>
         <span className="font-display text-display leading-none text-on-surface">{value}</span>

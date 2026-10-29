@@ -182,7 +182,9 @@ function ProfileForm({ profile, viewing }: { profile?: UavProfile; viewing: bool
         </div>
       )}
 
-      <div className={`grid grid-cols-1 items-start gap-gutter-desktop lg:grid-cols-12 ${viewing ? '' : 'pb-28'}`}>
+      <div
+        className={`grid grid-cols-1 items-start gap-gutter-desktop lg:grid-cols-12 ${viewing ? '' : 'ui-form-layout pb-28'}`}
+      >
         {/* A disabled fieldset locks every input in view mode */}
         <fieldset disabled={viewing} className="flex min-w-0 flex-col gap-space-lg lg:col-span-8">
           <SectionCard

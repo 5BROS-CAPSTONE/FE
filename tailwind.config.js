@@ -21,7 +21,7 @@ export default {
         'on-secondary-container': '#5c647a',
         'secondary-container': '#e4ebd7',
         'inverse-on-surface': '#eaf1ff',
-        'on-surface-variant': '#75816b',
+        'on-surface-variant': '#64725f',
         'surface-variant': '#e2e9d8',
         'secondary-fixed': '#e0e9d4',
         'surface-bright': '#f8f9ff',

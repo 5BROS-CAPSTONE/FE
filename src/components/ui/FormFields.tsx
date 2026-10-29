@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { cloneElement, isValidElement, useLayoutEffect, useRef, type HTMLAttributes, type ReactNode } from 'react'
 import Icon from '@/components/ui/Icon'
 import { inputClass } from '@/components/ui/inputClass'
 
@@ -14,8 +14,21 @@ interface FieldProps {
 }
 
 export function Field({ label, htmlFor, required, hint, error, aside, className = '', children }: FieldProps) {
+  const control =
+    isValidElement<HTMLAttributes<HTMLElement>>(children) &&
+    typeof children.type === 'string' &&
+    ['input', 'select', 'textarea'].includes(children.type)
+      ? cloneElement(children, {
+          'aria-invalid': !!error,
+          'aria-describedby': error
+            ? `${htmlFor}-error`
+            : hint
+              ? `${htmlFor}-hint`
+              : children.props['aria-describedby'],
+        })
+      : children
   return (
-    <div className={`flex flex-col gap-space-xs ${className}`}>
+    <div data-invalid={!!error} className={`ui-field flex flex-col gap-space-xs ${className}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <label className="flex items-center gap-1 font-label-lg text-label-lg text-on-surface" htmlFor={htmlFor}>
           {label}
@@ -23,14 +36,22 @@ export function Field({ label, htmlFor, required, hint, error, aside, className 
         </label>
         {aside}
       </div>
-      {children}
+      {control}
       {error ? (
-        <div className="mt-1 flex items-center gap-1.5 rounded-lg bg-error-container p-2 font-label-sm text-label-sm text-error">
+        <div
+          id={`${htmlFor}-error`}
+          role="alert"
+          className="mt-1 flex items-center gap-1.5 rounded-lg bg-error-container p-2 font-label-sm text-label-sm text-error"
+        >
           <Icon name="error" size={16} />
           <span>{error}</span>
         </div>
       ) : (
-        hint && <span className="font-label-sm text-label-sm text-secondary">{hint}</span>
+        hint && (
+          <span id={`${htmlFor}-hint`} className="font-label-sm text-label-sm text-secondary">
+            {hint}
+          </span>
+        )
       )}
     </div>
   )
@@ -52,6 +73,8 @@ export function NumberInput({ id, value, unit, onChange, error, step = '0.1', pl
       <input
         id={id}
         type="number"
+        aria-invalid={!!error}
+        aria-describedby={error ? `${id}-error` : undefined}
         step={step}
         value={value}
         placeholder={placeholder}
@@ -80,6 +103,8 @@ export function Select({ id, value, onChange, options, error, placeholder, disab
     <div className="relative">
       <select
         id={id}
+        aria-invalid={!!error}
+        aria-describedby={error ? `${id}-error` : undefined}
         value={value}
         disabled={disabled}
         onChange={(e) => onChange(e.target.value)}
@@ -92,7 +117,10 @@ export function Select({ id, value, onChange, options, error, placeholder, disab
           </option>
         ))}
       </select>
-      <Icon name="expand_more" className="pointer-events-none absolute right-3 top-2.5 text-secondary" />
+      <Icon
+        name="expand_more"
+        className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-secondary"
+      />
     </div>
   )
 }
@@ -106,7 +134,7 @@ interface SectionCardProps {
 
 export function SectionCard({ icon, title, subtitle, children }: SectionCardProps) {
   return (
-    <section className="rounded-lg bg-surface-container-lowest p-space-md shadow-sm md:p-space-lg">
+    <section className="ui-section-card rounded-lg bg-surface-container-lowest p-space-md md:p-space-lg">
       <div className="mb-space-md flex items-center gap-space-sm border-b border-surface-container pb-space-md">
         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface-container-low text-primary">
           <Icon name={icon} size={18} />
@@ -123,12 +151,29 @@ export function SectionCard({ icon, title, subtitle, children }: SectionCardProp
 
 /** Fixed bottom action bar used by the create/edit forms. */
 export function FormActionBar({ status, children }: { status: ReactNode; children: ReactNode }) {
+  const barRef = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    const bar = barRef.current
+    const workspace = bar?.closest<HTMLElement>('.workspace')
+    if (!bar || !workspace) return
+    const update = () => workspace.style.setProperty('--form-action-height', `${bar.getBoundingClientRect().height}px`)
+    update()
+    const observer = new ResizeObserver(update)
+    observer.observe(bar)
+    return () => {
+      observer.disconnect()
+      workspace.style.removeProperty('--form-action-height')
+    }
+  }, [])
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-between gap-space-md bg-surface-container-lowest/95 px-space-md py-space-sm shadow-[0_-2px_10px_rgba(0,0,0,0.06)] backdrop-blur-md md:px-space-lg lg:left-64">
+    <div
+      ref={barRef}
+      className="ui-form-action-bar fixed bottom-0 left-0 right-0 z-30 flex items-center justify-between gap-space-md bg-surface-container-lowest/95 px-space-md py-space-sm backdrop-blur-md md:px-space-lg lg:left-64"
+    >
       <div className="hidden min-w-0 items-center gap-space-sm font-label-md text-label-md text-secondary sm:flex">
         {status}
       </div>
-      <div className="ml-auto flex items-center gap-space-sm">{children}</div>
+      <div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-space-sm">{children}</div>
     </div>
   )
 }

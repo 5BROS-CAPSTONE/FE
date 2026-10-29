@@ -130,6 +130,24 @@ export default function HomePage() {
   useEffect(() => {
     document.title = 'SmartDroneHub · Chạm công nghệ. Nâng tầm mùa vụ.'
   }, [])
+  useEffect(() => {
+    if (!menuOpen) return
+    const closeOutside = (event: PointerEvent) => {
+      if (event.target instanceof Element && !event.target.closest('.public-nav')) setMenuOpen(false)
+    }
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMenuOpen(false)
+        container.current?.querySelector<HTMLButtonElement>('.public-menu-toggle')?.focus()
+      }
+    }
+    document.addEventListener('pointerdown', closeOutside)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.removeEventListener('pointerdown', closeOutside)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [menuOpen])
   useGSAP(
     () => {
       const media = gsap.matchMedia()
@@ -189,9 +207,15 @@ export default function HomePage() {
       <a href="#main-content" className="skip-link">
         Đến nội dung chính
       </a>
-      <header className="public-nav">
+      <header
+        className="public-nav"
+        onClick={(event) => {
+          if (event.target instanceof Element && event.target.closest('a')) setMenuOpen(false)
+        }}
+      >
         <Brand />
         <nav
+          id="customer-site-navigation"
           aria-label="Điều hướng trang chủ"
           className={menuOpen ? 'public-links is-open' : 'public-links'}
           onClick={() => setMenuOpen(false)}
@@ -202,7 +226,7 @@ export default function HomePage() {
         </nav>
         <div className="public-nav-actions">
           <Link to={entry} className="public-sign-in">
-            {session ? 'Không gian của tôi' : 'Đăng nhập'}
+            {session ? 'Tài khoản' : 'Đăng nhập'}
             <Icon name="north_east" size={17} />
           </Link>
           <button
@@ -210,6 +234,7 @@ export default function HomePage() {
             className="public-menu-toggle"
             aria-label={menuOpen ? 'Đóng menu' : 'Mở menu'}
             aria-expanded={menuOpen}
+            aria-controls="customer-site-navigation"
             onClick={() => setMenuOpen((value) => !value)}
           >
             <Icon name={menuOpen ? 'close' : 'menu'} />

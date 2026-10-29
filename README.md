@@ -54,14 +54,22 @@ Menu và nút sửa theo quyền. Đường dẫn cũ `/drones`, `/uav-profiles`
 
 ### Thiết kế và chuyển động
 
-- `src/styles/site.css`: trang chủ, ba nhận diện đăng nhập và giao diện dashboard; token ứng dụng trong `tailwind.config.js`.
+- `src/styles/tokens.css`: font tự lưu trữ, màu sắc, thang chữ, khoảng cách, bo góc và trạng thái focus dùng chung.
+- `src/styles/site.css`: bố cục trang chủ, ba trang đăng nhập và các workspace theo kích thước khả dụng.
+- `src/styles/components.css`: nút, input, bảng, menu, hộp thoại, lựa chọn loại phiếu và thanh thao tác form.
+- Font Be Vietnam Pro và Lora italic có đủ ký tự tiếng Việt, phục vụ từ `public/fonts/`; giấy phép và nguồn đi kèm. Giao diện không gọi Google Fonts khi chạy.
 - `src/components/brand/Brand.tsx`: nhận diện dùng chung.
 - `src/motion/gsap.ts`: đăng ký GSAP, `useGSAP` và ScrollTrigger một lần.
-- `src/motion/PageTransition.tsx`: chuyển cảnh nội dung ứng dụng theo đường dẫn.
+- `src/motion/PageTransition.tsx`: fade ngắn khi đổi trang, giữ ổn định vị trí của các thanh nút cố định.
 - Trang chủ: timeline mở đầu, parallax trên desktop, reveal theo cuộn, quy trình ba bước có thể tương tác, FAQ mở/đóng.
 - Các hook dùng `scope`, `revertOnUpdate` khi cần và dọn animation/ScrollTrigger khi unmount.
 - `prefers-reduced-motion` tắt chuyển động; ảnh có kích thước ổn định, biến thể mobile và WebP phục vụ từ `public/images/`.
 - Ảnh chỉ minh họa; nguồn tại `public/images/README.md`. Không dùng số liệu hiệu quả hoặc khách hàng giả làm bằng chứng.
+
+Menu thao tác nằm ngoài vùng cắt của bảng, có điều khiển bằng bàn phím và bám hàng khi cuộn ngang.
+Hộp thoại dùng native dialog/top layer, hỗ trợ focus loop, Escape và trả focus; drawer mobile có trạng thái inert khi đóng.
+Thanh nút form được đo bằng ResizeObserver để chừa đúng khoảng trống phía dưới, gồm cả safe area.
+Chi tiết thiết kế và ma trận rà soát Chrome/Firefox/WebKit ở [docs/design-system.md](docs/design-system.md).
 
 Áp dụng các skill tại `../skills/gsap-skills/skills/`: `gsap-core`, `gsap-react`, `gsap-timeline`,
 `gsap-scrolltrigger`, `gsap-performance`. Đây là source tham khảo; không chỉnh sửa repo skill hay BE.

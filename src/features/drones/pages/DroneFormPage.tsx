@@ -126,7 +126,7 @@ function DroneForm({ drone }: { drone?: Drone }) {
         }
       />
 
-      <div className="grid grid-cols-1 items-start gap-gutter-desktop pb-28 lg:grid-cols-12">
+      <div className="ui-form-layout grid grid-cols-1 items-start gap-gutter-desktop pb-28 lg:grid-cols-12">
         <div className="lg:col-span-8">
           <SectionCard icon={isEdit ? 'tune' : 'flight_takeoff'} title="1. Thông tin định danh drone">
             <div className="flex flex-col gap-space-lg">

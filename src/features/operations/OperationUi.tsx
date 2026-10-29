@@ -96,7 +96,7 @@ export function Panel({
 export function Metrics({ items }: { items: { label: string; value: string | number; note?: string }[] }) {
   const columns = items.length === 3 ? 'xl:grid-cols-3' : items.length === 2 ? 'xl:grid-cols-2' : 'xl:grid-cols-4'
   return (
-    <div className={`mb-5 grid gap-3 sm:grid-cols-2 ${columns}`}>
+    <div className={`operation-metrics mb-5 grid gap-3 sm:grid-cols-2 ${columns}`}>
       {items.map((item) => (
         <div
           key={item.label}
@@ -112,7 +112,7 @@ export function Metrics({ items }: { items: { label: string; value: string | num
 }
 
 export const inputClass =
-  'min-h-10 w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:bg-surface-container-low'
+  'ui-input min-h-11 w-full rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm text-on-surface outline-none disabled:bg-surface-container-low'
 export const textareaClass = `${inputClass} min-h-24 resize-y`
 export const labelClass = 'mb-1.5 block text-sm font-semibold text-on-surface'
 export const tableClass = 'w-full min-w-[750px] text-left text-sm'

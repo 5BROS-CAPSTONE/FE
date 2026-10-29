@@ -13,8 +13,9 @@ export default function PageTransition({ children }: { children: ReactNode }) {
         () => {
           gsap.fromTo(
             container.current,
-            { y: 14, autoAlpha: 0 },
-            { y: 0, autoAlpha: 1, duration: 0.5, ease: 'power3.out', clearProps: 'transform,opacity,visibility' },
+            { opacity: 0 },
+            // Avoid transforming ancestors of fixed form action bars.
+            { opacity: 1, duration: 0.25, ease: 'power2.out', clearProps: 'opacity' },
           )
         },
         container,
