@@ -1,11 +1,11 @@
 # SmartDroneHub – Frontend
 
 Giao diện web cho SmartDroneHub, hệ hỗ trợ quyết định (DSS) cho drone phun nông nghiệp – đồ án capstone nhóm 5BROS.
-Giao diện dựa trên thiết kế Stitch (design system "AgroFlight Precision"), toàn bộ tiếng Việt.
+Giao diện tiếng Việt với nhận diện xanh rừng / ivory, trang chủ khách hàng và các không gian vận hành riêng.
 
 ## Công nghệ
 
-React 19 · TypeScript · Vite · Tailwind CSS 3 · React Router · Material Symbols (icon) · ESLint · Prettier
+React 19 · TypeScript · Vite · Tailwind CSS 3 · React Router · GSAP + @gsap/react · Material Symbols · ESLint · Prettier
 
 ## Bắt đầu
 
@@ -15,6 +15,82 @@ Yêu cầu Node.js 22 (xem `.nvmrc`).
 npm install
 npm run dev        # http://localhost:5173
 ```
+
+Mở `/` để xem trang chủ khách hàng. Ba site có trang đăng nhập riêng, không còn bộ chọn cổng:
+
+| Site       | Trang công khai / đăng nhập | Không gian sau đăng nhập |
+| ---------- | --------------------------- | ------------------------ |
+| Khách hàng | `/` và `/dang-nhap`         | `/customer`              |
+| Nhân viên  | `/staff/dang-nhap`          | `/staff`                 |
+| Quản trị   | `/admin/dang-nhap`          | `/admin`                 |
+
+Các site hiện chạy trên cùng server Vite bằng các đường dẫn độc lập; chưa cấu hình domain hay triển khai hosting riêng.
+FE mặc định chạy chế độ demo. Mở mục **Trải nghiệm bản demo** trên từng trang đăng nhập để điền tài khoản mẫu.
+Mật khẩu chung là `Demo@123`.
+
+| Cổng       | Email demo                                  | Phạm vi                                                           |
+| ---------- | ------------------------------------------- | ----------------------------------------------------------------- |
+| Quản trị   | `admin@5bros.demo`                          | Tổng quan, tra cứu tài khoản nội bộ, vai trò/quyền, hồ sơ         |
+| Staff      | `manager@5bros.demo`                        | Khu vực canh tác, xử lý phiếu, xem đội bay                        |
+| Staff      | `expert@5bros.demo`                         | Tạo/sửa UAV Profile                                               |
+| Staff      | `technician@5bros.demo`                     | Tạo/sửa drone, xem UAV Profile                                    |
+| Staff      | `operator@5bros.demo`, `analyst@5bros.demo` | Các mục theo vai trò; module chưa xây dựng vẫn hiển thị trang chờ |
+| Khách hàng | `customer@5bros.demo`                       | Farm/Field và phiếu của Nguyễn Văn An (`KH-0928`)                 |
+
+## Đăng nhập và ba cổng ứng dụng
+
+- `src/portals/admin/`: layout, menu, routes và màn hình quản trị tại `/admin`.
+- `src/portals/staff/`: layout, menu, routes và tổng quan nhân viên tại `/staff`.
+- `src/portals/customer/`: trang chủ công khai trong `public/`, đăng nhập, thanh điều hướng riêng và không gian khách hàng.
+- `src/auth/`: biểu mẫu đăng nhập, session, kiểm tra cổng/quyền, API client và hồ sơ/đổi mật khẩu dùng chung.
+- `src/features/`: module nghiệp vụ dùng lại giữa các cổng; quyền và dữ liệu được giới hạn theo tài khoản.
+
+Mỗi site có provider và phiên riêng trong `sessionStorage`: `smartdronehub-auth-v2-customer`,
+`smartdronehub-auth-v2-staff`, `smartdronehub-auth-v2-admin`. Có thể đăng nhập đồng thời ba site trong cùng tab;
+đăng xuất một site không xóa phiên của site khác. Không lưu mật khẩu. Phiên cũ từ phiên bản v1 cần đăng nhập lại.
+Gõ trực tiếp URL chưa đăng nhập sẽ chuyển tới đúng trang đăng nhập của site; URL không có quyền hiển thị trang chặn.
+Menu và nút sửa theo quyền. Đường dẫn cũ `/drones`, `/uav-profiles` chuyển vào Staff;
+`/quan-ly-phieu`, `/khu-vuc-canh-tac` chuyển vào site khách hàng. Query `?portal=staff|admin` cũ chuyển đến URL đăng nhập riêng.
+
+### Thiết kế và chuyển động
+
+- `src/styles/site.css`: trang chủ, ba nhận diện đăng nhập và giao diện dashboard; token ứng dụng trong `tailwind.config.js`.
+- `src/components/brand/Brand.tsx`: nhận diện dùng chung.
+- `src/motion/gsap.ts`: đăng ký GSAP, `useGSAP` và ScrollTrigger một lần.
+- `src/motion/PageTransition.tsx`: chuyển cảnh nội dung ứng dụng theo đường dẫn.
+- Trang chủ: timeline mở đầu, parallax trên desktop, reveal theo cuộn, quy trình ba bước có thể tương tác, FAQ mở/đóng.
+- Các hook dùng `scope`, `revertOnUpdate` khi cần và dọn animation/ScrollTrigger khi unmount.
+- `prefers-reduced-motion` tắt chuyển động; ảnh có kích thước ổn định, biến thể mobile và WebP phục vụ từ `public/images/`.
+- Ảnh chỉ minh họa; nguồn tại `public/images/README.md`. Không dùng số liệu hiệu quả hoặc khách hàng giả làm bằng chứng.
+
+Áp dụng các skill tại `../skills/gsap-skills/skills/`: `gsap-core`, `gsap-react`, `gsap-timeline`,
+`gsap-scrolltrigger`, `gsap-performance`. Đây là source tham khảo; không chỉnh sửa repo skill hay BE.
+
+### Dùng API đăng nhập BE hiện có
+
+Copy `.env.example` thành `.env.local`, đặt:
+
+```dotenv
+VITE_AUTH_MODE=api
+VITE_API_BASE_URL=http://localhost:8080/api/v1
+```
+
+Khởi động lại Vite. FE gọi `POST /auth/login`, `GET /auth/me`, `POST /auth/logout`,
+`PUT /auth/password`; cổng quản trị đọc `GET /users` (phân trang bằng `items`) và `GET /roles`.
+Header xác thực là `Authorization: Bearer <accessToken>`. Session được kiểm tra khi khôi phục,
+khi cửa sổ được focus, khi token hết hạn và khi API trả 401. Đổi mật khẩu thành công yêu cầu đăng nhập lại.
+Không tự chuyển sang tài khoản demo nếu API lỗi. BE phải chạy và cho phép CORS từ origin FE.
+
+Mapping theo source BE: `ADMIN` vào cổng quản trị; `MANAGER`, `EXPERT`, `OPERATOR`, `TECHNICIAN`,
+`ANALYST` vào cổng Staff. Tài khoản nhiều role được vào cổng tương ứng với role của mình.
+Quyền đọc/ghi khu vực, UAV Profile và drone bám `security/Role.java` trong BE.
+Các mục nghiệp vụ chưa có quyền BE được giới hạn bằng role ở FE và vẫn là màn chờ.
+
+BE hiện chưa có role/endpoint đăng nhập khách hàng, nên cổng khách hàng chỉ đăng nhập được trong chế độ demo.
+Tài khoản demo không phải tài khoản BE. Tài khoản nội bộ do Admin cấp; không có tự đăng ký.
+Các màn quản trị hiện là tra cứu tài khoản và vai trò, chưa có form tạo/sửa/cấp role tài khoản.
+Đăng nhập API chưa chuyển dữ liệu các module đội bay/S7/S8 sang API; chúng vẫn dùng store demo.
+Phân quyền FE phục vụ điều hướng; API thật phải tiếp tục kiểm tra quyền và phạm vi dữ liệu ở BE.
 
 | Lệnh             | Tác dụng                                              |
 | ---------------- | ----------------------------------------------------- |
@@ -31,7 +107,13 @@ src/
 ├── app/                    # Khung ứng dụng
 │   ├── App.tsx             #   Provider + router
 │   ├── routes.tsx          #   Gom route của các feature
-│   └── navigation.ts       #   Menu sidebar (một chỗ duy nhất)
+│   └── navigation.ts       #   Kiểu menu, lọc quyền, breadcrumb
+├── auth/                   # LoginForm/AuthScreen, session, API client, route guard, hồ sơ
+├── motion/                 # GSAP registration, chuyển cảnh có cleanup
+├── portals/
+│   ├── admin/              # Cổng quản trị: layout, menu, routes, pages
+│   ├── staff/              # Cổng nhân viên: layout, menu, routes, pages
+│   └── customer/           # Site khách hàng: public/HomePage, login, workspace
 ├── components/
 │   ├── layout/             # AppLayout, Sidebar, Header
 │   └── ui/                 # Component dùng chung: Button, Modal, Icon, bảng, form...
@@ -50,7 +132,7 @@ src/
 ├── mocks/                  # Dữ liệu mẫu (khớp tài liệu bàn giao)
 ├── types/                  # Kiểu dữ liệu, mỗi thực thể một file
 ├── utils/                  # Hàm tiện ích (format ngày, nhãn trạng thái...)
-└── styles/index.css        # Tailwind + style nền
+└── styles/                 # index.css (Tailwind), site.css (nhận diện ba site)
 ```
 
 Import luôn dùng alias `@/` (trỏ tới `src/`), ví dụ `import Button from '@/components/ui/Button'`.
@@ -59,9 +141,8 @@ Import luôn dùng alias `@/` (trỏ tới `src/`), ví dụ `import Button from
 
 1. Tạo thư mục `src/features/batteries/` với `pages/` (và `components/` nếu cần).
 2. Tạo `src/features/batteries/routes.tsx` export mảng route, ví dụ `{ path: 'pin', element: <BatteryListPage /> }`.
-3. Thêm mảng đó vào `featureRoutes` trong `src/app/routes.tsx`.
-4. Menu: mục "Pin" đã có trong `src/app/navigation.ts`. Module mới thì thêm một dòng ở đây.
-   Mục menu chưa có route sẽ tự hiện trang "Màn hình đang được thiết kế".
+3. Đăng ký route trong `src/portals/<cổng>/routes.tsx`, kèm `RequireAccess` cho quyền/role tương ứng.
+4. Menu đặt tại `src/portals/<cổng>/navigation.ts`; mục của Staff chưa có module sẽ hiển thị màn chờ.
 5. Kiểu dữ liệu mới thêm vào `src/types/<thực thể>.ts` rồi export trong `src/types/index.ts`.
 
 Component dùng lại được ở nhiều module thì đặt trong `src/components/ui/`; chỉ dùng trong một module thì để trong `features/<module>/components/`.
@@ -77,9 +158,11 @@ Khi có API backend, thay các hàm trong store bằng lời gọi API, giữ ng
 
 ## Khu vực canh tác (S7) và quản lý phiếu (S8)
 
-- `/khu-vuc-canh-tac`: Manager xem/tạo/sửa/ngưng Farm và Field, xác minh ranh giới trên lưới mô phỏng. Customer xem Farm/Field của mình và gửi đề xuất qua phiếu.
-- `/quan-ly-phieu`: Customer lưu nháp/gửi phiếu Field hoặc yêu cầu bay, bổ sung trên cùng phiếu và theo dõi kết quả. Manager xem xét, yêu cầu bổ sung, tiếp nhận/từ chối, xử lý Field tại S7 hoặc bàn giao yêu cầu bay cho C1, ghi kết quả và đóng phiếu.
-- Dùng hộp “Vai trò mô phỏng” trên hai màn để chuyển giữa Mission Manager và Customer Nguyễn Văn An. Dữ liệu demo lưu trong `localStorage` của trình duyệt; “Khôi phục dữ liệu demo” đặt lại S7/S8 về mẫu ban đầu.
+- `/staff/khu-vuc-canh-tac`: Manager xem/tạo/sửa/ngưng Farm và Field, xác minh ranh giới trên lưới mô phỏng.
+- `/customer/khu-vuc-canh-tac`: khách hàng xem Farm/Field của mình và gửi đề xuất qua phiếu.
+- `/customer/quan-ly-phieu`: khách hàng lưu nháp/gửi phiếu khu vực canh tác hoặc nhiệm vụ, bổ sung trên cùng phiếu và theo dõi kết quả.
+- `/staff/quan-ly-phieu`: Manager xem xét, yêu cầu bổ sung, tiếp nhận/từ chối, xử lý Field tại S7 hoặc bàn giao yêu cầu bay cho C1, ghi kết quả và đóng phiếu.
+- Vai trò và phạm vi khách hàng lấy từ tài khoản đăng nhập. Đăng nhập riêng ở hai site để thử hai phía. Dữ liệu S7/S8 lưu trong `localStorage`, giữ lại các phiếu khi chuyển giữa site khách hàng và Staff.
 
 Ranh giới, diện tích và tệp đính kèm hiện là mô phỏng: lưới chưa dùng bản đồ địa lý thực, tệp chỉ lưu tên, không được tải lên máy chủ. Bước bàn giao C1 ghi mã và kết quả thử luồng trên phiếu; chưa tạo mission thật trong backend. Khi tích hợp API cần kiểm tra quyền Customer ở backend và đồng bộ trạng thái ticket, Field, mission.
 

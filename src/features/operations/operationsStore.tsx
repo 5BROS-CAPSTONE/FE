@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { OperationsContext } from './operationsContext'
 import { seedOperations, type OperationsData, type Role } from './operationsModel'
+import { useAuth } from '@/auth/authContext'
 
 const storageKey = 'smartdronehub-s7-s8-demo-v1'
 
@@ -17,7 +18,10 @@ function loadData(): OperationsData {
 export function OperationsProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<OperationsData>(loadData)
   const dataRef = useRef(data)
-  const [role, setRole] = useState<Role>('manager')
+  const { session } = useAuth()
+  const role: Role = session?.portal === 'customer' ? 'customer' : 'manager'
+  const customerId = session?.user.customerId ?? ''
+  const actor = session?.user.fullName ?? ''
 
   useEffect(() => {
     localStorage.setItem(storageKey, JSON.stringify(data))
@@ -37,6 +41,8 @@ export function OperationsProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <OperationsContext.Provider value={{ data, role, setRole, update, reset }}>{children}</OperationsContext.Provider>
+    <OperationsContext.Provider value={{ data, role, customerId, actor, update, reset }}>
+      {children}
+    </OperationsContext.Provider>
   )
 }

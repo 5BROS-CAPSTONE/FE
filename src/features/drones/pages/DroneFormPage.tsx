@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
+import { usePortalNavigate } from '@/app/usePortalNavigation'
 import Button from '@/components/ui/Button'
 import { Field, FormActionBar, SectionCard, Select } from '@/components/ui/FormFields'
 import { inputClass } from '@/components/ui/inputClass'
@@ -52,7 +53,7 @@ function ProfileSpecsPreview({ profile }: { profile: UavProfile }) {
 }
 
 function DroneForm({ drone }: { drone?: Drone }) {
-  const navigate = useNavigate()
+  const navigate = usePortalNavigate()
   const { profiles, drones, getProfile, createDrone, updateDrone, affectedMissions, batteriesOf, notify } = useFleet()
   const isEdit = !!drone
   const firstActive = profiles.find((p) => p.status === 'active')

@@ -3,7 +3,6 @@ import Button from '@/components/ui/Button'
 import { formatArea, measurePolygon, provinceCenters, type Point } from './geometry'
 import { ticketStatusText } from './operationLabels'
 import type { TicketStatus } from './operationsModel'
-import { useOperations } from './operationsContext'
 
 const statusStyles: Record<string, string> = {
   DRAFT: 'bg-surface-container text-on-surface-variant',
@@ -49,39 +48,13 @@ export function PageIntro({
   actions?: ReactNode
 }) {
   return (
-    <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
+    <div className="operation-intro mb-5 flex flex-wrap items-start justify-between gap-4">
       <div>
         <p className="mb-1 text-xs font-bold uppercase tracking-[0.12em] text-primary">{eyebrow}</p>
         <h1 className="text-3xl font-bold tracking-tight text-on-surface">{title}</h1>
         {description && <p className="mt-1.5 text-sm text-on-surface-variant">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
-    </div>
-  )
-}
-
-export function RolePicker() {
-  const { role, setRole, reset } = useOperations()
-  return (
-    <div className="mb-5 flex flex-wrap items-center gap-3 rounded-xl border border-outline-variant/50 bg-surface-container-lowest px-4 py-3">
-      <span className="text-xs font-semibold uppercase tracking-wider text-on-surface-variant">Vai trò mô phỏng</span>
-      <select
-        aria-label="Vai trò mô phỏng S7 và S8"
-        className="rounded-lg border border-outline-variant bg-surface-container-lowest px-3 py-2 text-sm font-semibold text-on-surface"
-        value={role}
-        onChange={(event) => setRole(event.target.value as 'manager' | 'customer')}
-      >
-        <option value="manager">Mission Manager</option>
-        <option value="customer">Khách hàng · Nguyễn Văn An</option>
-      </select>
-      <span className="text-xs text-on-surface-variant">Dữ liệu demo lưu trên trình duyệt này.</span>
-      <Button
-        variant="outline"
-        className="ml-auto h-8 px-3 text-xs"
-        onClick={() => window.confirm('Khôi phục dữ liệu demo S7/S8 trên trình duyệt này?') && reset()}
-      >
-        Khôi phục dữ liệu demo
-      </Button>
     </div>
   )
 }
@@ -109,7 +82,7 @@ export function Panel({
 }) {
   return (
     <section
-      className={`overflow-hidden rounded-xl border border-outline-variant/40 bg-surface-container-lowest shadow-sm ${className}`}
+      className={`operation-panel overflow-hidden rounded-xl border border-outline-variant/40 bg-surface-container-lowest shadow-sm ${className}`}
     >
       <div className="flex min-h-14 items-center justify-between gap-3 border-b border-outline-variant/40 px-5 py-3">
         <h2 className="text-base font-semibold text-on-surface">{title}</h2>
@@ -121,12 +94,13 @@ export function Panel({
 }
 
 export function Metrics({ items }: { items: { label: string; value: string | number; note?: string }[] }) {
+  const columns = items.length === 3 ? 'xl:grid-cols-3' : items.length === 2 ? 'xl:grid-cols-2' : 'xl:grid-cols-4'
   return (
-    <div className="mb-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <div className={`mb-5 grid gap-3 sm:grid-cols-2 ${columns}`}>
       {items.map((item) => (
         <div
           key={item.label}
-          className="rounded-xl border border-outline-variant/40 bg-surface-container-lowest px-5 py-4 shadow-sm"
+          className="operation-metric rounded-xl border border-outline-variant/40 bg-surface-container-lowest px-5 py-4 shadow-sm"
         >
           <p className="text-xs text-on-surface-variant">{item.label}</p>
           <p className="mt-1 text-2xl font-bold text-on-surface">{item.value}</p>

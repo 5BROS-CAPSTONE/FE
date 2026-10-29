@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { usePortalNavigate } from '@/app/usePortalNavigation'
+import { useAuth } from '@/auth/authContext'
 import Button from '@/components/ui/Button'
 import { EmptyRow, IconButton, TableCard, TableFooter, Th, theadRowClass } from '@/components/ui/DataTable'
 import Icon from '@/components/ui/Icon'
@@ -14,7 +15,8 @@ import { formatDateTime, formatNumber } from '@/utils/format'
 type Tab = 'all' | 'active' | 'retired'
 
 export default function UavProfileListPage() {
-  const navigate = useNavigate()
+  const navigate = usePortalNavigate()
+  const { can } = useAuth()
   const { profiles, drones, activeDronesOf, retireProfile, notify } = useFleet()
   const [query, setQuery] = useState('')
   const [manufacturer, setManufacturer] = useState('')
@@ -55,9 +57,11 @@ export default function UavProfileListPage() {
             >
               Xuất báo cáo (Excel)
             </Button>
-            <Button icon="add" onClick={() => navigate('/uav-profiles/new')}>
-              Tạo UAV Profile
-            </Button>
+            {can('uav-profile:create') && (
+              <Button icon="add" onClick={() => navigate('/uav-profiles/new')}>
+                Tạo UAV Profile
+              </Button>
+            )}
           </>
         }
       />
@@ -202,6 +206,7 @@ export default function UavProfileListPage() {
                   <button
                     type="button"
                     onClick={() => navigate(`/drones?profile=${p.id}`)}
+                    disabled={!can('drone:read')}
                     className="whitespace-nowrap rounded-full bg-secondary-container px-2.5 py-1 font-label-md text-label-md text-on-secondary-fixed-variant hover:bg-surface-container-highest"
                   >
                     {activeDronesOf(p.id).length} drone
@@ -220,7 +225,7 @@ export default function UavProfileListPage() {
                       title="Xem chi tiết"
                       onClick={() => navigate(`/uav-profiles/${p.id}`)}
                     />
-                    {!retired && (
+                    {!retired && can('uav-profile:update') && (
                       <>
                         <IconButton
                           icon="edit"
@@ -260,7 +265,8 @@ interface RetireProfileDialogProps {
 }
 
 function RetireProfileDialog({ profile, onClose, onConfirm }: RetireProfileDialogProps) {
-  const navigate = useNavigate()
+  const { can } = useAuth()
+  const navigate = usePortalNavigate()
   const { activeDronesOf } = useFleet()
   const blocking = activeDronesOf(profile.id)
 
@@ -276,7 +282,7 @@ function RetireProfileDialog({ profile, onClose, onConfirm }: RetireProfileDialo
             <Button variant="secondary" onClick={onClose}>
               Đóng
             </Button>
-            <Button onClick={() => navigate(`/drones?profile=${profile.id}`)}>
+            <Button disabled={!can('drone:read')} onClick={() => navigate(`/drones?profile=${profile.id}`)}>
               Đi tới danh sách drone <Icon name="arrow_forward" size={18} />
             </Button>
           </>

@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react'
-import { CURRENT_USER, seedBatteries, seedDrones, seedMissions, seedProfiles } from '@/mocks/data'
+import { seedBatteries, seedDrones, seedMissions, seedProfiles } from '@/mocks/data'
+import { useAuth } from '@/auth/authContext'
 import type { Battery, Drone, DroneStatus, Mission, MissionNotification, ProfileSpecs, UavProfile } from '@/types'
 import { nowIso } from '@/utils/format'
 import { FleetContext, type FleetStore } from '@/store/fleetContext'
@@ -12,6 +13,8 @@ const isAffected = (m: Mission, droneIds: string[]) =>
 
 // In-memory store implementing the S1 business rules; swap for API calls once the BE is ready.
 export function FleetProvider({ children }: { children: ReactNode }) {
+  const { session } = useAuth()
+  const actor = session?.user.fullName ?? 'Nhân viên'
   const [profiles, setProfiles] = useState<UavProfile[]>(seedProfiles)
   const [drones, setDrones] = useState<Drone[]>(seedDrones)
   const [batteries, setBatteries] = useState<Battery[]>(seedBatteries)
@@ -69,7 +72,7 @@ export function FleetProvider({ children }: { children: ReactNode }) {
                 ...d,
                 status: to,
                 unavailableReason,
-                history: [{ at: nowIso(), by: CURRENT_USER.name, from: d.status, to, reason }, ...d.history],
+                history: [{ at: nowIso(), by: actor, from: d.status, to, reason }, ...d.history],
               }
             : d,
         ),
@@ -97,7 +100,7 @@ export function FleetProvider({ children }: { children: ReactNode }) {
           version: 1,
           status: 'active',
           updatedAt: at,
-          versions: [{ version: 1, createdAt: at, createdBy: CURRENT_USER.name, note: 'Tạo mới' }],
+          versions: [{ version: 1, createdAt: at, createdBy: actor, note: 'Tạo mới' }],
         }
         setProfiles((list) => [...list, profile])
         return profile
@@ -118,10 +121,7 @@ export function FleetProvider({ children }: { children: ReactNode }) {
                   ...specs,
                   version: p.version + 1,
                   updatedAt: at,
-                  versions: [
-                    { version: p.version + 1, createdAt: at, createdBy: CURRENT_USER.name, note },
-                    ...p.versions,
-                  ],
+                  versions: [{ version: p.version + 1, createdAt: at, createdBy: actor, note }, ...p.versions],
                 }
               : p,
           ),
@@ -182,7 +182,7 @@ export function FleetProvider({ children }: { children: ReactNode }) {
         changeStatus(id, 'retired', 'Ngưng sử dụng', null)
       },
     }
-  }, [profiles, drones, batteries, missions, notifications, toast, notify])
+  }, [profiles, drones, batteries, missions, notifications, toast, notify, actor])
 
   return <FleetContext.Provider value={store}>{children}</FleetContext.Provider>
 }

@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
+import { usePortalNavigate } from '@/app/usePortalNavigation'
+import ForbiddenPage from '@/pages/ForbiddenPage'
 import Button from '@/components/ui/Button'
 import {
   BoundaryMap,
@@ -10,7 +12,6 @@ import {
   Notice,
   PageIntro,
   Panel,
-  RolePicker,
   StatusPill,
   tableClass,
   tdClass,
@@ -19,7 +20,7 @@ import {
   thClass,
 } from './OperationUi'
 import { actionText, ticketStatusText } from './operationLabels'
-import { addEvent, customerName, demoCustomerId, type Ticket, type TicketStatus } from './operationsModel'
+import { addEvent, customerName, type Ticket, type TicketStatus } from './operationsModel'
 import { useOperations } from './operationsContext'
 import TicketForm from './TicketForm'
 
@@ -38,7 +39,7 @@ const managerStatuses: TicketStatus[] = [
 const customerStatuses: TicketStatus[] = ['DRAFT', ...managerStatuses]
 
 export default function TicketPage() {
-  const { data, role, update } = useOperations()
+  const { data, role, customerId, actor, update } = useOperations()
   const [params, setParams] = useSearchParams()
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('ALL')
@@ -46,7 +47,7 @@ export default function TicketPage() {
   const scope =
     role === 'manager'
       ? data.tickets.filter((ticket) => ticket.status !== 'DRAFT')
-      : data.tickets.filter((ticket) => ticket.customerId === demoCustomerId)
+      : data.tickets.filter((ticket) => ticket.customerId === customerId)
   const list = scope
     .filter(
       (ticket) =>
@@ -64,7 +65,7 @@ export default function TicketPage() {
         const current = draft.tickets.find((item) => item.id === ticket.id)
         if (current && current.status === 'SUBMITTED') {
           current.status = 'UNDER_REVIEW'
-          addEvent(current, 'Manager', 'Bắt đầu xem xét phiếu.')
+          addEvent(current, actor, 'Bắt đầu xem xét phiếu.')
         }
       })
     setParams({ ticket: ticket.id })
@@ -72,10 +73,15 @@ export default function TicketPage() {
 
   return (
     <>
-      <RolePicker />
       {params.has('new') || params.has('edit') ? (
-        <TicketForm key={`${params.get('new')}:${params.get('edit')}:${params.get('action')}:${params.get('field')}`} />
-      ) : selected && (role === 'manager' ? selected.status !== 'DRAFT' : selected.customerId === demoCustomerId) ? (
+        role === 'customer' ? (
+          <TicketForm
+            key={`${params.get('new')}:${params.get('edit')}:${params.get('action')}:${params.get('field')}`}
+          />
+        ) : (
+          <ForbiddenPage />
+        )
+      ) : selected && (role === 'manager' ? selected.status !== 'DRAFT' : selected.customerId === customerId) ? (
         <TicketDetail
           key={`${selected.id}:${role}`}
           ticket={selected}
@@ -193,8 +199,8 @@ function TicketDetail({
   onBack: () => void
   onEditDraft: () => void
 }) {
-  const { data, role, update } = useOperations()
-  const navigate = useNavigate()
+  const { data, role, actor, update } = useOperations()
+  const navigate = usePortalNavigate()
   const [decision, setDecision] = useState<'needs' | 'reject' | null>(null)
   const [decisionReason, setDecisionReason] = useState('')
   const [internalNote, setInternalNote] = useState(ticket.internalNote)
@@ -224,8 +230,8 @@ function TicketDetail({
       current.status = decision === 'needs' ? 'NEEDS_INFO' : 'REJECTED'
       current.decisionReason = decisionReason.trim()
       current.internalNote = internalNote.trim()
-      addEvent(current, 'Manager', `${decision === 'needs' ? 'Yêu cầu bổ sung' : 'Từ chối'}: ${decisionReason.trim()}`)
-      if (internalNote.trim()) addEvent(current, 'Manager', internalNote.trim(), false)
+      addEvent(current, actor, `${decision === 'needs' ? 'Yêu cầu bổ sung' : 'Từ chối'}: ${decisionReason.trim()}`)
+      if (internalNote.trim()) addEvent(current, actor, internalNote.trim(), false)
     })
     setDecision(null)
     setError('')
@@ -234,7 +240,7 @@ function TicketDetail({
     if (!reviewable) return
     change((current) => {
       current.status = 'ACCEPTED'
-      addEvent(current, 'Manager', 'Tiếp nhận phiếu. Chuyển đến bước thực hiện tương ứng.')
+      addEvent(current, actor, 'Tiếp nhận phiếu. Chuyển đến bước thực hiện tương ứng.')
     })
   }
   const supplementTicket = (event: FormEvent) => {
@@ -262,7 +268,7 @@ function TicketDetail({
       current.status = 'IN_PROGRESS'
       addEvent(
         current,
-        'Manager',
+        actor,
         `Bàn giao C1; tạo hồ sơ mission ${current.resultMissionId} từ phiếu. Chưa phải phê duyệt bay.`,
       )
     })
@@ -273,7 +279,7 @@ function TicketDetail({
     change((current) => {
       current.c1Completed = true
       current.c1Result = c1Result.trim()
-      addEvent(current, 'Manager', `Nhận kết quả C1 cho ${current.resultMissionId}: ${current.c1Result}`)
+      addEvent(current, actor, `Nhận kết quả C1 cho ${current.resultMissionId}: ${current.c1Result}`)
     })
     setError('')
   }
@@ -290,10 +296,10 @@ function TicketDetail({
       current.status = pending ? 'IN_PROGRESS' : 'RESOLVED'
       addEvent(
         current,
-        'Manager',
+        actor,
         `${pending ? 'Chưa thể hoàn tất' : 'Đã giải quyết và thông báo kết quả'}: ${publicResponse.trim()}`,
       )
-      if (internalNote.trim()) addEvent(current, 'Manager', internalNote.trim(), false)
+      if (internalNote.trim()) addEvent(current, actor, internalNote.trim(), false)
     })
     setError('')
   }
@@ -314,7 +320,7 @@ function TicketDetail({
       current.status = 'CANCELLED'
       current.decisionReason = cancelReason.trim()
       current.cancellationRequested = false
-      addEvent(current, 'Manager', `Đã xác nhận hủy yêu cầu: ${cancelReason.trim()}`)
+      addEvent(current, actor, `Đã xác nhận hủy yêu cầu: ${cancelReason.trim()}`)
     })
     setError('')
   }
@@ -645,7 +651,7 @@ function TicketDetail({
                   onClick={() =>
                     change((current) => {
                       current.status = 'CLOSED'
-                      addEvent(current, 'Manager', 'Xác nhận đóng phiếu sau khi đã giải quyết.')
+                      addEvent(current, actor, 'Xác nhận đóng phiếu sau khi đã giải quyết.')
                     })
                   }
                 >

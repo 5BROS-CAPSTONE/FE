@@ -6,7 +6,6 @@ import { BoundaryMap, inputClass, labelClass, Notice, PageIntro, Panel, textarea
 import {
   addEvent,
   customerName,
-  demoCustomerId,
   newTicket,
   now,
   type FieldAction,
@@ -21,10 +20,10 @@ function todayLocal() {
 }
 
 export default function TicketForm() {
-  const { data, update } = useOperations()
+  const { data, customerId, update } = useOperations()
   const [params, setParams] = useSearchParams()
   const existing = data.tickets.find(
-    (ticket) => ticket.id === params.get('edit') && ticket.status === 'DRAFT' && ticket.customerId === demoCustomerId,
+    (ticket) => ticket.id === params.get('edit') && ticket.status === 'DRAFT' && ticket.customerId === customerId,
   )
   const requestedType = params.get('new')
   const [type, setType] = useState<TicketType | ''>(
@@ -37,7 +36,7 @@ export default function TicketForm() {
   )
   const [targetFieldId, setTargetFieldId] = useState(existing?.fieldId ?? params.get('field') ?? '')
   const field = data.fields.find((item) => item.id === targetFieldId)
-  const farm = data.farms.find((item) => item.customerId === demoCustomerId)
+  const farm = data.farms.find((item) => item.customerId === customerId)
   const [name, setName] = useState(existing?.name ?? (action === 'CREATE' ? '' : (field?.name ?? '')))
   const [province, setProvince] = useState(existing?.province ?? field?.province ?? 'Hà Nội')
   const [location, setLocation] = useState(existing?.location ?? field?.location ?? '')
@@ -99,7 +98,7 @@ export default function TicketForm() {
     update((draft) => {
       let ticket = draft.tickets.find((item) => item.id === existing?.id && item.status === 'DRAFT')
       if (!ticket) {
-        ticket = newTicket(draft, type)
+        ticket = newTicket(draft, type, customerId)
         draft.tickets.push(ticket)
       }
       savedId = ticket.id
@@ -139,7 +138,7 @@ export default function TicketForm() {
       if (send)
         addEvent(
           ticket,
-          customerName(demoCustomerId),
+          customerName(customerId),
           type === 'FIELD_REQUEST'
             ? `Gửi phiếu ${action === 'CREATE' ? 'thêm' : action === 'UPDATE' ? 'sửa' : 'ngưng'} Field để Manager xem xét.`
             : `Gửi yêu cầu bay: ${objective.trim()}.`,

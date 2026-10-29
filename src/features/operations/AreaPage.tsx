@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
+import { usePortalNavigate } from '@/app/usePortalNavigation'
 import Button from '@/components/ui/Button'
 import Modal from '@/components/ui/Modal'
 import { formatArea, measurePolygon, provinces, validatePolygon, type Point } from './geometry'
@@ -12,30 +13,20 @@ import {
   Notice,
   PageIntro,
   Panel,
-  RolePicker,
   StatusPill,
   tableClass,
   tdClass,
   TextLink,
   thClass,
 } from './OperationUi'
-import {
-  addEvent,
-  customerName,
-  customers,
-  demoCustomerId,
-  nextId,
-  now,
-  type Field,
-  type Farm,
-} from './operationsModel'
+import { addEvent, customerName, customers, nextId, now, type Field, type Farm } from './operationsModel'
 import { useOperations } from './operationsContext'
 
 type Dialog = { kind: 'farm'; farmId?: string } | { kind: 'deactivate'; entity: 'farm' | 'field'; id: string } | null
 
 export default function AreaPage() {
-  const { data, role, update } = useOperations()
-  const navigate = useNavigate()
+  const { data, role, customerId, actor, update } = useOperations()
+  const navigate = usePortalNavigate()
   const [params, setParams] = useSearchParams()
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState('ALL')
@@ -49,7 +40,7 @@ export default function AreaPage() {
   const sourceTicketId = params.get('ticket') ?? ''
   const selectedFarm = data.farms.find((farm) => farm.id === id)
   const selectedField = data.fields.find((field) => field.id === id)
-  const customerFarm = data.farms.find((farm) => farm.customerId === demoCustomerId)
+  const customerFarm = data.farms.find((farm) => farm.customerId === customerId)
   const fieldsOf = (farmId: string) => data.fields.filter((field) => field.farmId === farmId)
   const areaOf = (farmId: string) =>
     fieldsOf(farmId).reduce((sum, field) => sum + measurePolygon(field.polygon).area, 0)
@@ -108,7 +99,7 @@ export default function AreaPage() {
         farm.updatedAt = now()
         draft.audit.push({
           entity: farm.id,
-          actor: 'Manager',
+          actor,
           at: now(),
           message:
             previousCustomer === farmCustomer
@@ -128,7 +119,7 @@ export default function AreaPage() {
         draft.farms.push(farm)
         draft.audit.push({
           entity: farm.id,
-          actor: 'Manager',
+          actor,
           at: now(),
           message: `Tạo Farm cho ${customerName(farmCustomer)}.`,
         })
@@ -170,7 +161,7 @@ export default function AreaPage() {
       if (!record) return
       record.status = 'INACTIVE'
       record.updatedAt = now()
-      draft.audit.push({ entity: entityId, actor: 'Manager', at: now(), message: `Ngưng sử dụng: ${reason.trim()}` })
+      draft.audit.push({ entity: entityId, actor, at: now(), message: `Ngưng sử dụng: ${reason.trim()}` })
       draft.assessmentsStale.push({
         ...(entity === 'field' ? { fieldId: entityId } : { farmId: entityId }),
         at: now(),
@@ -180,7 +171,7 @@ export default function AreaPage() {
       if (ticket) {
         ticket.resultFieldId = entityId
         ticket.status = 'IN_PROGRESS'
-        addEvent(ticket, 'Manager', `S7 đã ngưng Field ${entityId}. Chờ ghi kết quả S8.`)
+        addEvent(ticket, actor, `S7 đã ngưng Field ${entityId}. Chờ ghi kết quả S8.`)
       }
     })
     setDialog(null)
@@ -291,7 +282,7 @@ export default function AreaPage() {
 
   const renderField = (field: Field) => {
     const farm = data.farms.find((item) => item.id === field.farmId)
-    if (!farm || (role === 'customer' && farm.customerId !== demoCustomerId))
+    if (!farm || (role === 'customer' && farm.customerId !== customerId))
       return <Notice tone="error">Không tìm thấy Field trong phạm vi của bạn.</Notice>
     const related = data.tickets.filter((ticket) => ticket.fieldId === field.id || ticket.resultFieldId === field.id)
     const measurement = measurePolygon(field.polygon)
@@ -389,7 +380,7 @@ export default function AreaPage() {
       if (!customerFarm) return <Notice tone="warning">Chưa có Farm được gán cho Nguyễn Văn An.</Notice>
       const fields = fieldsOf(customerFarm.id)
       const openTickets = data.tickets.filter(
-        (ticket) => ticket.customerId === demoCustomerId && !['CLOSED', 'REJECTED'].includes(ticket.status),
+        (ticket) => ticket.customerId === customerId && !['CLOSED', 'REJECTED'].includes(ticket.status),
       )
       return (
         <>
@@ -556,7 +547,6 @@ export default function AreaPage() {
 
   return (
     <>
-      <RolePicker />
       {view === 'farm' && selectedFarm && role === 'manager' ? (
         renderFarm(selectedFarm)
       ) : view === 'field' && selectedField ? (
@@ -675,8 +665,8 @@ export default function AreaPage() {
 }
 
 function FieldForm({ farmId, sourceTicketId, onBack }: { farmId: string; sourceTicketId: string; onBack: () => void }) {
-  const { data, update } = useOperations()
-  const navigate = useNavigate()
+  const { data, actor, update } = useOperations()
+  const navigate = usePortalNavigate()
   const source = data.tickets.find((ticket) => ticket.id === sourceTicketId)
   const editing = data.fields.find(
     (field) => field.id === farmId || (source?.action === 'UPDATE' && field.id === source.fieldId),
@@ -731,7 +721,7 @@ function FieldForm({ farmId, sourceTicketId, onBack }: { farmId: string; sourceT
       if (parent) parent.updatedAt = now()
       draft.audit.push({
         entity: target.id,
-        actor: 'Manager',
+        actor,
         at: now(),
         message: source ? `Áp dụng yêu cầu ${source.id}; xác minh và lưu Field.` : 'Manager tạo/sửa Field trực tiếp.',
       })
@@ -745,7 +735,7 @@ function FieldForm({ farmId, sourceTicketId, onBack }: { farmId: string; sourceT
       if (ticket) {
         ticket.resultFieldId = target.id
         ticket.status = 'IN_PROGRESS'
-        addEvent(ticket, 'Manager', `S7 đã lưu Field ${target.id}. Chờ ghi kết quả và xác nhận hoàn tất.`)
+        addEvent(ticket, actor, `S7 đã lưu Field ${target.id}. Chờ ghi kết quả và xác nhận hoàn tất.`)
       }
     })
     navigate(source ? `/quan-ly-phieu?ticket=${source.id}` : `/khu-vuc-canh-tac?view=field&id=${savedId}`)

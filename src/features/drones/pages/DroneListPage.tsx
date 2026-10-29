@@ -1,5 +1,7 @@
 import { useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
+import { usePortalNavigate } from '@/app/usePortalNavigation'
+import { useAuth } from '@/auth/authContext'
 import Button from '@/components/ui/Button'
 import {
   EmptyRow,
@@ -28,7 +30,8 @@ const statusIconColor: Record<DroneStatus, string> = {
 }
 
 export default function DroneListPage() {
-  const navigate = useNavigate()
+  const navigate = usePortalNavigate()
+  const { can } = useAuth()
   const [params, setParams] = useSearchParams()
   const { drones, profiles, missions, getProfile, batteriesOf } = useFleet()
   const [query, setQuery] = useState('')
@@ -61,9 +64,11 @@ export default function DroneListPage() {
         title="Danh sách drone"
         subtitle="Quản lý từng drone vật lý thuộc các UAV Profile"
         actions={
-          <Button icon="add" onClick={() => navigate('/drones/new')}>
-            Thêm drone
-          </Button>
+          can('drone:create') && (
+            <Button icon="add" onClick={() => navigate('/drones/new')}>
+              Thêm drone
+            </Button>
+          )
         }
       />
 
@@ -207,7 +212,7 @@ export default function DroneListPage() {
                       muted={retired}
                       onClick={() => navigate(`/drones/${d.id}`)}
                     />
-                    {!retired && (
+                    {!retired && can('drone:update') && (
                       <>
                         <IconButton icon="edit" title="Chỉnh sửa" onClick={() => navigate(`/drones/${d.id}/edit`)} />
                         {d.status === 'in-mission' ? (

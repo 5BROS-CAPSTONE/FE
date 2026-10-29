@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import Icon from '@/components/ui/Icon'
+import { usePortalPath } from '@/app/usePortalNavigation'
 
 export interface Crumb {
   label: string
@@ -16,6 +17,7 @@ interface PageHeadingProps {
 }
 
 export default function PageHeading({ title, subtitle, crumbs, badge, actions }: PageHeadingProps) {
+  const pathFor = usePortalPath()
   return (
     <div className="mb-space-lg flex flex-col justify-between gap-space-md md:flex-row md:items-start">
       <div className="flex min-w-0 flex-col gap-1">
@@ -27,7 +29,7 @@ export default function PageHeading({ title, subtitle, crumbs, badge, actions }:
                 {i === crumbs.length - 1 ? (
                   <span className="font-semibold text-primary">{c.label}</span>
                 ) : c.to ? (
-                  <Link to={c.to} className="hover:text-on-surface">
+                  <Link to={pathFor(c.to)} className="hover:text-on-surface">
                     {c.label}
                   </Link>
                 ) : (

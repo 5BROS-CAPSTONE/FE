@@ -1,5 +1,7 @@
 import { useState, type ReactNode } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
+import { usePortalNavigate, usePortalPath } from '@/app/usePortalNavigation'
+import { useAuth } from '@/auth/authContext'
 import Button from '@/components/ui/Button'
 import Icon from '@/components/ui/Icon'
 import PageHeading from '@/components/ui/PageHeading'
@@ -44,7 +46,9 @@ function Card({
 
 export default function DroneDetailPage() {
   const { id = '' } = useParams()
-  const navigate = useNavigate()
+  const navigate = usePortalNavigate()
+  const pathFor = usePortalPath()
+  const { can } = useAuth()
   const { getDrone, getProfile, missions, batteriesOf } = useFleet()
   const [action, setAction] = useState<DroneAction | null>(null)
   const drone = getDrone(id)
@@ -64,7 +68,8 @@ export default function DroneDetailPage() {
         badge={<DroneStatusBadge status={drone.status} />}
         subtitle={`Drone vật lý thuộc dòng ${profile?.model ?? '–'}`}
         actions={
-          !retired && (
+          !retired &&
+          can('drone:update') && (
             <>
               <Button variant="outline" icon="edit" onClick={() => navigate(`/drones/${drone.id}/edit`)}>
                 Chỉnh sửa
@@ -94,7 +99,7 @@ export default function DroneDetailPage() {
               [
                 'UAV Profile',
                 <Link
-                  to={`/uav-profiles/${drone.profileId}`}
+                  to={pathFor(`/uav-profiles/${drone.profileId}`)}
                   className="inline-flex items-center gap-1 font-title-sm text-title-sm text-primary hover:underline"
                 >
                   {profile?.model} – v{profile?.version} <Icon name="open_in_new" size={16} />

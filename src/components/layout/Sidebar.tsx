@@ -1,7 +1,10 @@
 import { useState } from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
-import { isGroup, navigation, type NavGroup, type NavLeaf } from '@/app/navigation'
+import { NavLink, useLocation, useNavigate } from 'react-router-dom'
+import { isGroup, navigationFor, type NavGroup, type NavLeaf } from '@/app/navigation'
 import Icon from '@/components/ui/Icon'
+import { useAuth } from '@/auth/authContext'
+import { loginPath, portalInfo, type Portal } from '@/auth/model'
+import Brand from '@/components/brand/Brand'
 
 const navClass = ({ isActive }: { isActive: boolean }) =>
   `flex items-center gap-space-sm px-space-md py-space-sm rounded-lg font-label-lg text-label-lg transition-colors ${
@@ -12,7 +15,7 @@ const navClass = ({ isActive }: { isActive: boolean }) =>
 
 function LeafLink({ item }: { item: NavLeaf }) {
   return (
-    <NavLink to={item.to} className={navClass}>
+    <NavLink to={item.to} end={item.exact} className={navClass}>
       {item.icon && <Icon name={item.icon} />}
       <span className="flex-1">{item.label}</span>
       {item.tag && (
@@ -54,20 +57,28 @@ function Group({ group }: { group: NavGroup }) {
   )
 }
 
-export default function Sidebar({ onNavigate }: { onNavigate: () => void }) {
+export default function Sidebar({ portal, onNavigate }: { portal: Portal; onNavigate: () => void }) {
+  const { session, logout } = useAuth()
+  const navigate = useNavigate()
+  const [loggingOut, setLoggingOut] = useState(false)
+  const navigation = navigationFor(portal, session?.user)
+  const signOut = async () => {
+    if (loggingOut) return
+    setLoggingOut(true)
+    const completion = logout()
+    navigate(loginPath(portal), { replace: true })
+    await completion
+  }
   return (
     <>
-      <div className="flex h-16 items-center gap-space-sm px-space-md">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-container text-on-primary">
-          <Icon name="hub" size={20} />
-        </div>
-        <div className="flex min-w-0 flex-col leading-tight">
-          <span className="truncate font-title-sm text-title-sm tracking-tight text-on-surface">SmartDroneHub</span>
-          <span className="truncate font-label-sm text-label-sm text-on-surface-variant">
-            Quản lý Đội bay Nông nghiệp
-          </span>
-        </div>
+      <div className="workspace-brand">
+        <Brand
+          to={`/${portal}`}
+          light={portal === 'admin'}
+          caption={portal === 'admin' ? 'ADMINISTRATION' : 'OPERATIONS WORKSPACE'}
+        />
       </div>
+      <div className="workspace-nav-label">{portalInfo[portal].label}</div>
       {/* Close the mobile drawer after picking a link */}
       <nav
         className="flex flex-1 flex-col gap-space-xs overflow-y-auto px-space-sm py-space-sm"
@@ -77,6 +88,24 @@ export default function Sidebar({ onNavigate }: { onNavigate: () => void }) {
           isGroup(item) ? <Group key={item.label} group={item} /> : <LeafLink key={item.to} item={item} />,
         )}
       </nav>
+      <div className="workspace-sidebar-note">
+        <Icon name={portal === 'admin' ? 'verified_user' : 'eco'} size={22} />
+        <p>
+          {portal === 'admin' ? 'Quản trị với sự an tâm.' : 'Công nghệ vun trồng tương lai.'}
+          <small>SMARTDRONEHUB / 5BROS</small>
+        </p>
+      </div>
+      <div className="border-t border-outline-variant/30 p-3">
+        <button
+          type="button"
+          disabled={loggingOut}
+          onClick={signOut}
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-on-surface-variant hover:bg-error-container/30 hover:text-error"
+        >
+          <Icon name="logout" size={20} />
+          {loggingOut ? 'Đang đăng xuất…' : 'Đăng xuất'}
+        </button>
+      </div>
     </>
   )
 }

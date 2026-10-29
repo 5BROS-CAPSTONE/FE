@@ -4,7 +4,8 @@ import type { OperationsData, Role } from './operationsModel'
 export interface OperationsStore {
   data: OperationsData
   role: Role
-  setRole: (role: Role) => void
+  customerId: string
+  actor: string
   update: (apply: (draft: OperationsData) => void) => void
   reset: () => void
 }

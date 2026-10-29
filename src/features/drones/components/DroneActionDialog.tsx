@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { usePortalNavigate } from '@/app/usePortalNavigation'
 import Button from '@/components/ui/Button'
 import Icon from '@/components/ui/Icon'
 import Modal, { InfoNote, ModalSectionLabel } from '@/components/ui/Modal'
@@ -130,7 +130,7 @@ function UnavailableDialog({ drone, onClose }: { drone: Drone; onClose: () => vo
 }
 
 function ReopenDialog({ drone, onClose }: { drone: Drone; onClose: () => void }) {
-  const navigate = useNavigate()
+  const navigate = usePortalNavigate()
   const { reopenDrone, getProfile, notify } = useFleet()
   const [result, setResult] = useState<ReopenResult | null>(null)
   const profile = getProfile(drone.profileId)

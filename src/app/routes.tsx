@@ -1,29 +1,55 @@
 import { Navigate, type RouteObject } from 'react-router-dom'
-import { navLeaves } from '@/app/navigation'
-import AppLayout from '@/components/layout/AppLayout'
-import { droneRoutes } from '@/features/drones/routes'
-import { operationsRoutes } from '@/features/operations/routes'
-import { uavProfileRoutes } from '@/features/uav-profiles/routes'
-import ComingSoonPage from '@/pages/ComingSoonPage'
-import NotFoundPage from '@/pages/NotFoundPage'
+import { PortalRedirect, RequirePortal } from '@/auth/RouteGuards'
+import PortalScope from '@/app/PortalScope'
+import SiteRoot from '@/app/SiteRoot'
+import { adminRoute } from '@/portals/admin/routes'
+import { staffRoute } from '@/portals/staff/routes'
+import { customerRoute } from '@/portals/customer/routes'
 
-/** Each feature exports its own routes; add new features to this list. */
-const featureRoutes: RouteObject[] = [...uavProfileRoutes, ...droneRoutes, ...operationsRoutes]
-
-// Menu items whose module is not built yet get a placeholder page
-const implemented = new Set(featureRoutes.map((r) => r.path?.split('/')[0]))
-const placeholderRoutes: RouteObject[] = navLeaves
-  .filter((leaf) => !implemented.has(leaf.to.slice(1)))
-  .map((leaf) => ({ path: leaf.to.slice(1), element: <ComingSoonPage title={leaf.label} /> }))
-
-export const routes: RouteObject[] = [
+const siteRoutes: RouteObject[] = [
   {
-    element: <AppLayout />,
+    element: <PortalScope key="customer" portal="customer" />,
     children: [
-      { index: true, element: <Navigate to="/drones" replace /> },
-      ...featureRoutes,
-      ...placeholderRoutes,
-      { path: '*', element: <NotFoundPage /> },
+      { path: '/', lazy: async () => ({ Component: (await import('@/portals/customer/public/HomePage')).default }) },
+      {
+        path: '/dang-nhap',
+        lazy: async () => ({ Component: (await import('@/portals/customer/CustomerLoginPage')).default }),
+      },
+      { element: <RequirePortal portal="customer" />, children: [customerRoute] },
+      { path: '/quan-ly-phieu', element: <PortalRedirect legacy /> },
+      { path: '/khu-vuc-canh-tac', element: <PortalRedirect legacy /> },
     ],
   },
+  {
+    element: <PortalScope key="staff" portal="staff" />,
+    children: [
+      {
+        path: '/staff/dang-nhap',
+        lazy: async () => ({ Component: (await import('@/portals/staff/StaffLoginPage')).default }),
+      },
+      { element: <RequirePortal portal="staff" />, children: [staffRoute] },
+      ...[
+        'drones',
+        'uav-profiles',
+        'nhiem-vu',
+        'lap-ke-hoach',
+        'danh-gia-kha-thi',
+        'pin',
+        'du-lieu-moi-truong',
+        'bao-cao',
+      ].map((path) => ({ path: `/${path}/*`, element: <PortalRedirect legacy /> })),
+    ],
+  },
+  {
+    element: <PortalScope key="admin" portal="admin" />,
+    children: [
+      {
+        path: '/admin/dang-nhap',
+        lazy: async () => ({ Component: (await import('@/portals/admin/AdminLoginPage')).default }),
+      },
+      { element: <RequirePortal portal="admin" />, children: [adminRoute] },
+    ],
+  },
+  { path: '*', element: <Navigate to="/" replace /> },
 ]
+export const routes: RouteObject[] = [{ element: <SiteRoot />, children: siteRoutes }]

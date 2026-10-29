@@ -1,5 +1,7 @@
 import { useState, type ReactNode } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
+import { usePortalNavigate } from '@/app/usePortalNavigation'
+import { useAuth } from '@/auth/authContext'
 import Button from '@/components/ui/Button'
 import { Field, FormActionBar, NumberInput, SectionCard, Select } from '@/components/ui/FormFields'
 import { inputClass } from '@/components/ui/inputClass'
@@ -34,7 +36,8 @@ export default function UavProfileFormPage({ view = false }: { view?: boolean })
 }
 
 function ProfileForm({ profile, viewing }: { profile?: UavProfile; viewing: boolean }) {
-  const navigate = useNavigate()
+  const navigate = usePortalNavigate()
+  const { can } = useAuth()
   const { profiles, createProfile, updateProfile, affectedMissions, activeDronesOf, getDrone, notify } = useFleet()
   const isEdit = !!profile
   const original = profile ? toForm(profile) : emptyForm
@@ -133,6 +136,7 @@ function ProfileForm({ profile, viewing }: { profile?: UavProfile; viewing: bool
         }
         actions={
           viewing &&
+          can('uav-profile:update') &&
           !retired &&
           profile && (
             <Button icon="edit" onClick={() => navigate(`/uav-profiles/${profile.id}/edit`)}>
