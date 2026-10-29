@@ -2,6 +2,7 @@ import { Link, useLocation } from 'react-router-dom'
 import { findNavTrail } from '@/app/navigation'
 import Icon from '@/components/ui/Icon'
 import { COOPERATIVE, CURRENT_USER } from '@/mocks/data'
+import { useOperations } from '@/features/operations/operationsContext'
 
 function HeaderCrumbs() {
   const { pathname } = useLocation()
@@ -23,6 +24,11 @@ function HeaderCrumbs() {
 }
 
 export default function Header({ onOpenMenu }: { onOpenMenu: () => void }) {
+  const { pathname } = useLocation()
+  const { role } = useOperations()
+  const operationsPage = pathname.startsWith('/khu-vuc-canh-tac') || pathname.startsWith('/quan-ly-phieu')
+  const userName = operationsPage && role === 'manager' ? 'Mission Manager' : CURRENT_USER.name
+  const userRole = operationsPage ? (role === 'manager' ? 'Quản lý vận hành' : 'Khách hàng') : CURRENT_USER.role
   return (
     <header className="fixed left-0 right-0 top-0 z-30 flex h-16 items-center justify-between gap-space-md bg-surface-container-lowest/90 px-space-md shadow-[0_1px_8px_rgba(0,0,0,0.04)] backdrop-blur-md md:px-space-lg lg:left-64">
       <div className="flex items-center gap-space-sm">
@@ -53,11 +59,11 @@ export default function Header({ onOpenMenu }: { onOpenMenu: () => void }) {
         </button>
         <div className="flex items-center gap-space-sm">
           <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary-container font-title-sm text-title-sm text-on-secondary-fixed">
-            {CURRENT_USER.name.split(' ').pop()?.[0]}
+            {userName.split(' ').pop()?.[0]}
           </div>
           <div className="hidden min-w-0 flex-col leading-tight sm:flex">
-            <span className="truncate font-title-sm text-title-sm text-on-surface">{CURRENT_USER.name}</span>
-            <span className="truncate font-label-sm text-label-sm text-on-surface-variant">{CURRENT_USER.role}</span>
+            <span className="truncate font-title-sm text-title-sm text-on-surface">{userName}</span>
+            <span className="truncate font-label-sm text-label-sm text-on-surface-variant">{userRole}</span>
           </div>
         </div>
       </div>

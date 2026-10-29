@@ -40,10 +40,11 @@ src/
 │   │   ├── pages/          #     Các màn (route)
 │   │   ├── routes.tsx      #     Route của module
 │   │   └── profileFields.ts
-│   └── drones/             #   S1.2 – S1.4 Drone
-│       ├── components/     #     Component riêng của module (popup đổi trạng thái)
-│       ├── pages/
-│       └── routes.tsx
+│   ├── drones/             #   S1.2 – S1.4 Drone
+│   │   ├── components/     #     Component riêng của module (popup đổi trạng thái)
+│   │   ├── pages/
+│   │   └── routes.tsx
+│   └── operations/         #   S7 Farm/Field và S8 phiếu yêu cầu
 ├── pages/                  # Trang chung: ComingSoon, NotFound
 ├── store/                  # State dùng chung (FleetProvider) – hiện là dữ liệu giả lập
 ├── mocks/                  # Dữ liệu mẫu (khớp tài liệu bàn giao)
@@ -73,6 +74,14 @@ Component dùng lại được ở nhiều module thì đặt trong `src/compone
 Luật nghiệp vụ (S1 và subprocess DC.1 `markStale`) nằm trong `src/store/FleetProvider.tsx`. Dữ liệu là giả lập và reset khi tải lại trang.
 Thông số UAV Profile lấy từ sheet "[5BROS] Danh Sach Thong So Drone" – không tự thêm số liệu.
 Khi có API backend, thay các hàm trong store bằng lời gọi API, giữ nguyên giao diện `FleetStore` trong `src/store/fleetContext.ts`.
+
+## Khu vực canh tác (S7) và quản lý phiếu (S8)
+
+- `/khu-vuc-canh-tac`: Manager xem/tạo/sửa/ngưng Farm và Field, xác minh ranh giới trên lưới mô phỏng. Customer xem Farm/Field của mình và gửi đề xuất qua phiếu.
+- `/quan-ly-phieu`: Customer lưu nháp/gửi phiếu Field hoặc yêu cầu bay, bổ sung trên cùng phiếu và theo dõi kết quả. Manager xem xét, yêu cầu bổ sung, tiếp nhận/từ chối, xử lý Field tại S7 hoặc bàn giao yêu cầu bay cho C1, ghi kết quả và đóng phiếu.
+- Dùng hộp “Vai trò mô phỏng” trên hai màn để chuyển giữa Mission Manager và Customer Nguyễn Văn An. Dữ liệu demo lưu trong `localStorage` của trình duyệt; “Khôi phục dữ liệu demo” đặt lại S7/S8 về mẫu ban đầu.
+
+Ranh giới, diện tích và tệp đính kèm hiện là mô phỏng: lưới chưa dùng bản đồ địa lý thực, tệp chỉ lưu tên, không được tải lên máy chủ. Bước bàn giao C1 ghi mã và kết quả thử luồng trên phiếu; chưa tạo mission thật trong backend. Khi tích hợp API cần kiểm tra quyền Customer ở backend và đồng bộ trạng thái ticket, Field, mission.
 
 ## Đóng góp
 

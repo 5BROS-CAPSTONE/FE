@@ -33,6 +33,7 @@ export const navigation: NavItem[] = [
   },
   { to: '/pin', label: 'Pin', icon: 'battery_charging_full' },
   { to: '/khu-vuc-canh-tac', label: 'Khu vực canh tác', icon: 'crop_free' },
+  { to: '/quan-ly-phieu', label: 'Quản lý phiếu', icon: 'description' },
   { to: '/du-lieu-moi-truong', label: 'Dữ liệu môi trường', icon: 'thermostat' },
   { to: '/bao-cao', label: 'Báo cáo', icon: 'bar_chart' },
   { to: '/cau-hinh', label: 'Cấu hình', icon: 'settings' },
