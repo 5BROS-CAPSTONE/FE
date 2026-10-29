@@ -26,10 +26,17 @@ export default function TicketForm() {
   const existing = data.tickets.find(
     (ticket) => ticket.id === params.get('edit') && ticket.status === 'DRAFT' && ticket.customerId === demoCustomerId,
   )
-  const type: TicketType = existing?.type ?? (params.get('new') === 'mission' ? 'MISSION_REQUEST' : 'FIELD_REQUEST')
-  const action: FieldAction = existing?.action ?? (params.get('action') as FieldAction) ?? 'CREATE'
-  const fieldId = existing?.fieldId ?? params.get('field') ?? null
-  const field = data.fields.find((item) => item.id === fieldId)
+  const requestedType = params.get('new')
+  const [type, setType] = useState<TicketType | ''>(
+    existing?.type ??
+      (requestedType === 'field' ? 'FIELD_REQUEST' : requestedType === 'mission' ? 'MISSION_REQUEST' : ''),
+  )
+  const requestedAction = params.get('action')
+  const [action, setAction] = useState<FieldAction>(
+    existing?.action ?? (requestedAction === 'UPDATE' || requestedAction === 'DEACTIVATE' ? requestedAction : 'CREATE'),
+  )
+  const [targetFieldId, setTargetFieldId] = useState(existing?.fieldId ?? params.get('field') ?? '')
+  const field = data.fields.find((item) => item.id === targetFieldId)
   const farm = data.farms.find((item) => item.customerId === demoCustomerId)
   const [name, setName] = useState(existing?.name ?? (action === 'CREATE' ? '' : (field?.name ?? '')))
   const [province, setProvince] = useState(existing?.province ?? field?.province ?? 'Hà Nội')
@@ -57,19 +64,20 @@ export default function TicketForm() {
       item.verification === 'VERIFIED' &&
       farm?.status === 'ACTIVE',
   )
+  const editableFields = data.fields.filter((item) => item.farmId === farm?.id && item.status === 'ACTIVE')
   const needsBoundary = type === 'FIELD_REQUEST' && (action === 'CREATE' || (action === 'UPDATE' && changeBoundary))
 
   if (!farm) return <Notice tone="warning">Customer chưa được gán Farm.</Notice>
   if (existing === undefined && params.has('edit'))
     return <Notice tone="error">Không tìm thấy bản nháp trong phạm vi của bạn.</Notice>
-  if (type === 'FIELD_REQUEST' && action !== 'CREATE' && (!field || field.farmId !== farm.id))
-    return <Notice tone="error">Field không thuộc Farm của bạn.</Notice>
-
   const save = (event: FormEvent, send: boolean) => {
     event.preventDefault()
     if (saving.current) return
     setError('')
+    if (!type) return setError('Vui lòng chọn loại phiếu yêu cầu.')
     if (send && type === 'FIELD_REQUEST') {
+      if (action !== 'CREATE' && (!field || !editableFields.some((item) => item.id === field.id)))
+        return setError('Chọn cánh đồng đang hoạt động thuộc Farm của bạn.')
       if (action === 'DEACTIVATE' && !reason.trim()) return setError('Cần nhập lý do ngưng Field.')
       if (action !== 'DEACTIVATE' && (!name.trim() || !location.trim() || !province))
         return setError('Nhập tên, tỉnh và mô tả vị trí Field.')
@@ -99,7 +107,7 @@ export default function TicketForm() {
         type === 'FIELD_REQUEST'
           ? {
               action,
-              fieldId: action === 'CREATE' ? null : fieldId,
+              fieldId: action === 'CREATE' ? null : targetFieldId,
               name: action === 'DEACTIVATE' ? (field?.name ?? '') : name.trim(),
               province,
               location: location.trim(),
@@ -108,16 +116,26 @@ export default function TicketForm() {
               attachments,
               attested: needsBoundary && attested,
               reason: reason.trim(),
+              objective: '',
+              preferredDate: '',
+              description: '',
             }
           : {
               action: null,
               fieldId: selectedField || null,
+              name: '',
+              province: '',
+              location: '',
+              polygon: [],
+              evidenceType: '',
+              attested: false,
+              reason: '',
               objective: objective.trim(),
               preferredDate,
               description: description.trim(),
               attachments,
             }
-      Object.assign(ticket, patch, { status: send ? 'SUBMITTED' : 'DRAFT', updatedAt: now() })
+      Object.assign(ticket, patch, { type, status: send ? 'SUBMITTED' : 'DRAFT', updatedAt: now() })
       if (send)
         addEvent(
           ticket,
@@ -141,24 +159,54 @@ export default function TicketForm() {
     setError('')
   }
 
+  const chooseType = (value: TicketType | '') => {
+    setType(value)
+    setAction('CREATE')
+    setTargetFieldId('')
+    setName('')
+    setProvince('Hà Nội')
+    setLocation('')
+    setPolygon([])
+    setChangeBoundary(true)
+    setAttachments([])
+    setAttested(false)
+    setReason('')
+    setSelectedField('')
+    setObjective('')
+    setPreferredDate('')
+    setDescription('')
+    setError('')
+  }
+
+  const chooseAction = (value: FieldAction) => {
+    setAction(value)
+    setTargetFieldId('')
+    setName('')
+    setProvince('Hà Nội')
+    setLocation('')
+    setPolygon([])
+    setChangeBoundary(value === 'CREATE')
+    setAttachments([])
+    setAttested(false)
+    setError('')
+  }
+
+  const chooseField = (id: string) => {
+    const selected = editableFields.find((item) => item.id === id)
+    setTargetFieldId(id)
+    setName(selected?.name ?? '')
+    setProvince(selected?.province ?? 'Hà Nội')
+    setLocation(selected?.location ?? '')
+    setPolygon(selected?.polygon ?? [])
+    setError('')
+  }
+
   return (
     <>
       <PageIntro
         eyebrow="S8.1 · Customer"
-        title={
-          type === 'MISSION_REQUEST'
-            ? 'Yêu cầu nhiệm vụ bay'
-            : action === 'CREATE'
-              ? 'Yêu cầu thêm Field'
-              : action === 'UPDATE'
-                ? 'Đề xuất sửa Field'
-                : 'Yêu cầu ngưng Field'
-        }
-        description={
-          type === 'FIELD_REQUEST'
-            ? `Farm ${farm.name} được điền sẵn. Manager sẽ kiểm tra đề xuất trước khi thay đổi Field chính thức.`
-            : 'Chọn Field chính thức của bạn. Gợi ý biểu mẫu chỉ là bản nháp để bạn kiểm tra.'
-        }
+        title={existing ? 'Chỉnh sửa phiếu yêu cầu' : 'Tạo phiếu yêu cầu'}
+        description="Chọn loại phiếu yêu cầu, sau đó điền các thông tin tương ứng bên dưới."
         actions={
           <Button variant="outline" onClick={() => setParams({})}>
             ← Phiếu của tôi
@@ -177,8 +225,24 @@ export default function TicketForm() {
           phép bay.
         </Notice>
       )}
-      <Panel title={type === 'MISSION_REQUEST' ? 'Thông tin phiếu mission' : 'Thông tin đề xuất'} aside={type}>
+      <Panel title="Thông tin phiếu yêu cầu">
         <form className="space-y-5 p-5" onSubmit={(event) => save(event, true)}>
+          <div>
+            <label className={labelClass} htmlFor="request-type">
+              Loại phiếu yêu cầu *
+            </label>
+            <select
+              id="request-type"
+              className={inputClass}
+              value={type}
+              disabled={!!existing}
+              onChange={(event) => chooseType(event.target.value as TicketType | '')}
+            >
+              <option value="">Chọn loại phiếu yêu cầu</option>
+              <option value="FIELD_REQUEST">Phiếu yêu cầu chỉnh sửa khu vực canh tác</option>
+              <option value="MISSION_REQUEST">Phiếu yêu cầu nhiệm vụ</option>
+            </select>
+          </div>
           {type === 'MISSION_REQUEST' ? (
             <>
               <div className="flex gap-2 border-b border-outline-variant/40 pb-3">
@@ -285,26 +349,47 @@ export default function TicketForm() {
                 </div>
               )}
             </>
-          ) : (
+          ) : type === 'FIELD_REQUEST' ? (
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <label className={labelClass}>Farm của bạn</label>
                 <input className={inputClass} value={`${farm.name} (${farm.id})`} readOnly />
               </div>
               <div>
-                <label className={labelClass}>Hành động</label>
-                <input
+                <label className={labelClass} htmlFor="request-action">
+                  Hành động *
+                </label>
+                <select
+                  id="request-action"
                   className={inputClass}
-                  value={
-                    action === 'CREATE'
-                      ? 'Thêm Field mới'
-                      : action === 'UPDATE'
-                        ? `Sửa ${field?.name}`
-                        : `Ngưng ${field?.name}`
-                  }
-                  readOnly
-                />
+                  value={action}
+                  onChange={(event) => chooseAction(event.target.value as FieldAction)}
+                >
+                  <option value="CREATE">Thêm mới cánh đồng</option>
+                  <option value="UPDATE">Chỉnh sửa cánh đồng</option>
+                  <option value="DEACTIVATE">Ngưng sử dụng cánh đồng</option>
+                </select>
               </div>
+              {action !== 'CREATE' && (
+                <div className="md:col-span-2">
+                  <label className={labelClass} htmlFor="request-field">
+                    Cánh đồng cần {action === 'UPDATE' ? 'chỉnh sửa' : 'ngưng sử dụng'} *
+                  </label>
+                  <select
+                    id="request-field"
+                    className={inputClass}
+                    value={targetFieldId}
+                    onChange={(event) => chooseField(event.target.value)}
+                  >
+                    <option value="">Chọn cánh đồng của bạn</option>
+                    {editableFields.map((item) => (
+                      <option key={item.id} value={item.id}>
+                        {item.name} · {item.province} ({item.id})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               {action !== 'DEACTIVATE' && (
                 <>
                   <div>
@@ -436,18 +521,24 @@ export default function TicketForm() {
                 />
               </div>
             </div>
+          ) : (
+            <p className="rounded-lg bg-surface-container-low px-4 py-5 text-sm text-on-surface-variant">
+              Chọn một loại phiếu để hiển thị biểu mẫu cần điền.
+            </p>
           )}
           {error && (
             <p role="alert" className="text-sm text-error">
               {error}
             </p>
           )}
-          <div className="flex flex-wrap justify-end gap-2">
-            <Button variant="outline" onClick={(event) => save(event, false)}>
-              Lưu nháp
-            </Button>
-            <Button type="submit">Gửi phiếu</Button>
-          </div>
+          {type && (
+            <div className="flex flex-wrap justify-end gap-2">
+              <Button variant="outline" onClick={(event) => save(event, false)}>
+                Lưu nháp
+              </Button>
+              <Button type="submit">Gửi phiếu</Button>
+            </div>
+          )}
         </form>
       </Panel>
     </>

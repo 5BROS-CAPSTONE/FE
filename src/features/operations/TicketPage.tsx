@@ -93,14 +93,7 @@ export default function TicketPage() {
                 : 'Theo dõi trạng thái, bổ sung thông tin trên cùng phiếu và xem kết quả.'
             }
             actions={
-              role === 'customer' && (
-                <>
-                  <Button onClick={() => setParams({ new: 'field', action: 'CREATE' })}>Phiếu Field</Button>
-                  <Button variant="outline" onClick={() => setParams({ new: 'mission' })}>
-                    Phiếu mission
-                  </Button>
-                </>
-              )
+              role === 'customer' && <Button onClick={() => setParams({ new: 'request' })}>Tạo phiếu yêu cầu</Button>
             }
           />
           <Metrics
