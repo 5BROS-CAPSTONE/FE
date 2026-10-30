@@ -1,0 +1,26 @@
+#!/bin/sh
+# Chạy đúng những gì CI chạy, để lỗi lộ ra ở máy chứ không phải ở Pull Request.
+# Hook được bật tự động khi chạy `npm install` (script "prepare" đặt core.hooksPath).
+# Bỏ qua một lần khi thật sự cần: git commit --no-verify
+
+# symbolic-ref cũng đúng trên nhánh chưa có commit nào, khác với rev-parse.
+branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+if [ "$branch" = "main" ]; then
+  echo "✗ Đang ở nhánh main. Mọi thay đổi phải đi qua nhánh cá nhân rồi mở Pull Request."
+  echo "  Chạy: git switch -c <tên-của-bạn>   rồi commit lại."
+  exit 1
+fi
+
+echo "→ npm run check"
+if ! npm run check --silent; then
+  echo "✗ check đỏ. Chạy 'npm run format' rồi sửa phần lint/typecheck còn lại."
+  exit 1
+fi
+
+echo "→ npm test"
+if ! npm test --silent; then
+  echo "✗ Test đỏ. Sửa code hoặc sửa test cho đúng, đừng xoá test."
+  exit 1
+fi
+
+echo "✓ check và test đều xanh"

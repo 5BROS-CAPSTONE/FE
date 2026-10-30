@@ -100,13 +100,24 @@ Các màn quản trị hiện là tra cứu tài khoản và vai trò, chưa có
 Đăng nhập API chưa chuyển dữ liệu các module đội bay/S7/S8 sang API; chúng vẫn dùng store demo.
 Phân quyền FE phục vụ điều hướng; API thật phải tiếp tục kiểm tra quyền và phạm vi dữ liệu ở BE.
 
-| Lệnh             | Tác dụng                                              |
-| ---------------- | ----------------------------------------------------- |
-| `npm run dev`    | Chạy server phát triển                                |
-| `npm run build`  | Kiểm tra kiểu và build bản production vào `dist`      |
-| `npm run check`  | Typecheck + lint + kiểm tra format (CI chạy lệnh này) |
-| `npm run format` | Tự format toàn bộ code bằng Prettier                  |
-| `npm run lint`   | Chạy ESLint                                           |
+| Lệnh                 | Tác dụng                                         |
+| -------------------- | ------------------------------------------------ |
+| `npm run dev`        | Chạy server phát triển                           |
+| `npm run build`      | Kiểm tra kiểu và build bản production vào `dist` |
+| `npm run check`      | Typecheck + lint + kiểm tra format               |
+| `npm test`           | Chạy Vitest một lượt                             |
+| `npm run test:watch` | Vitest ở chế độ theo dõi khi đang code           |
+| `npm run format`     | Tự format toàn bộ code bằng Prettier             |
+| `npm run lint`       | Chạy ESLint                                      |
+
+CI chạy lần lượt `npm run check`, `npm test` rồi `npm run build`. Trước khi commit nên chạy:
+
+```bash
+npm run format && npm run check && npm test && npm run build
+```
+
+Test đặt cạnh file nguồn với tên `*.test.ts` / `*.test.tsx`; helper dựng cảnh ở `src/test/dom.tsx`.
+Quy ước dành cho AI coding agent (và cho người) ở [AGENTS.md](AGENTS.md).
 
 ## Cấu trúc thư mục
 
