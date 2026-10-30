@@ -231,8 +231,8 @@
 }
 .hero-shade {
   z-index: -1;
-  background: linear-gradient(90deg, #082b20de, #14382170 65%, #14382110),
-    linear-gradient(0deg, #092b23a1, transparent 35%);
+  background:
+    linear-gradient(90deg, #082b20de, #14382170 65%, #14382110), linear-gradient(0deg, #092b23a1, transparent 35%);
 }
 .hero-content {
   position: relative;

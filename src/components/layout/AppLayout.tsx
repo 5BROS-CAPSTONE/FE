@@ -16,15 +16,16 @@ export default function AppLayout({ portal }: { portal: Portal }) {
   const openerRef = useRef<HTMLButtonElement | null>(null)
   const { toast } = useFleet()
   const { session } = useAuth()
+  const [wasDesktop, setWasDesktop] = useState(desktop)
+  if (desktop !== wasDesktop) {
+    setWasDesktop(desktop)
+    if (desktop) setMenuOpen(false)
+  }
   useEffect(() => {
     document.title = `${portal === 'admin' ? 'Quản trị hệ thống' : 'Không gian vận hành'} · SmartDroneHub`
   }, [portal])
   useEffect(() => {
-    if (desktop) {
-      setMenuOpen(false)
-      return
-    }
-    if (!menuOpen) return
+    if (desktop || !menuOpen) return
     const previous = openerRef.current ?? (document.activeElement as HTMLElement | null)
     const overflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
