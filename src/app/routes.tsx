@@ -52,4 +52,16 @@ const siteRoutes: RouteObject[] = [
   },
   { path: '*', element: <Navigate to="/" replace /> },
 ]
-export const routes: RouteObject[] = [{ element: <SiteRoot />, children: siteRoutes }]
+export const routes: RouteObject[] = [
+  {
+    element: <SiteRoot />,
+    // Shown while the first lazy route module is still loading. React Router 7
+    // dropped RouterProvider's fallbackElement in favour of this route-level one.
+    hydrateFallbackElement: (
+      <div className="auth-loading" role="status">
+        SmartDroneHub · Đang chuẩn bị không gian của bạn…
+      </div>
+    ),
+    children: siteRoutes,
+  },
+]
