@@ -2,7 +2,7 @@ import { fileURLToPath, URL } from 'node:url'
 import react from '@vitejs/plugin-react'
 import autoprefixer from 'autoprefixer'
 import tailwindcss from 'tailwindcss'
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -25,5 +25,11 @@ export default defineConfig({
   resolve: {
     // Keep in sync with "paths" in tsconfig.json
     alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
+  },
+  test: {
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.ts'],
+    include: ['src/**/*.test.{ts,tsx}'],
+    restoreMocks: true,
   },
 })
