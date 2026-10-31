@@ -187,9 +187,18 @@ Ranh giới, diện tích và tệp đính kèm hiện là mô phỏng: lưới 
 
 ## Triển khai trên Vercel
 
-`vercel.json` chuyển mọi đường dẫn không phải file tĩnh về `index.html`. Thiếu file này thì
-React Router chỉ chạy khi người dùng bấm link trong trang: mở thẳng `/staff/dang-nhap` hay
-bấm F5 sẽ ra 404, vì Vercel đi tìm một file tên như vậy và không thấy.
+`vercel.json` chuyển đường dẫn về `index.html` cho React Router xử lý. Thiếu file này thì
+router chỉ chạy khi người dùng bấm link trong trang: mở thẳng `/staff/dang-nhap` hay bấm F5
+sẽ ra 404, vì Vercel đi tìm một file tên như vậy và không thấy.
+
+Ba thư mục `assets/`, `fonts/`, `images/` được loại khỏi luật này có chủ ý. Nếu rewrite cả
+chúng thì một file không còn tồn tại — ví dụ chunk cũ `assets/XyZ.js` sau khi deploy bản mới —
+sẽ trả về `index.html` kèm `content-type: text/html` thay vì 404. Trình duyệt nhận HTML ở chỗ
+chờ JavaScript và báo lỗi khó hiểu `Failed to fetch dynamically imported module`.
+
+Người dùng đang mở tab cũ lúc deploy bản mới vẫn có thể gặp lỗi đó, vì `index.html` trong tab
+của họ trỏ tới chunk đã bị thay tên. Tải lại trang bỏ qua cache (Ctrl+Shift+R, hoặc Cmd+Shift+R
+trên máy Mac) là hết.
 
 Nối vào backend thật thì đặt hai biến trong Vercel (Settings → Environment Variables),
 chọn cả **Production** lẫn **Preview**:

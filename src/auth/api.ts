@@ -14,6 +14,10 @@ const errorMessages: Record<string, string> = {
   ACCOUNT_DISABLED: 'Tài khoản đã bị khóa. Vui lòng liên hệ quản trị viên.',
   CURRENT_PASSWORD_INCORRECT: 'Mật khẩu hiện tại không đúng.',
   ACCESS_DENIED: 'Bạn không có quyền thực hiện thao tác này.',
+  EMAIL_ALREADY_EXISTS: 'Email này đã được cấp cho một tài khoản khác.',
+  USER_NOT_FOUND: 'Không tìm thấy tài khoản. Có thể ai đó vừa xoá hoặc đổi email.',
+  LAST_ADMIN_REQUIRED: 'Hệ thống phải còn ít nhất một Quản trị viên đang hoạt động.',
+  ACCOUNT_ROLES_REQUIRED: 'Tài khoản phải có một vai trò mới kích hoạt được.',
 }
 
 export async function apiRequest<T>(path: string, token?: string, options: RequestInit = {}): Promise<T> {
