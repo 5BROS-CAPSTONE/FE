@@ -185,6 +185,28 @@ Khi có API backend, thay các hàm trong store bằng lời gọi API, giữ ng
 
 Ranh giới, diện tích và tệp đính kèm hiện là mô phỏng: lưới chưa dùng bản đồ địa lý thực, tệp chỉ lưu tên, không được tải lên máy chủ. Bước bàn giao C1 ghi mã và kết quả thử luồng trên phiếu; chưa tạo mission thật trong backend. Khi tích hợp API cần kiểm tra quyền Customer ở backend và đồng bộ trạng thái ticket, Field, mission.
 
+## Triển khai trên Vercel
+
+`vercel.json` chuyển mọi đường dẫn không phải file tĩnh về `index.html`. Thiếu file này thì
+React Router chỉ chạy khi người dùng bấm link trong trang: mở thẳng `/staff/dang-nhap` hay
+bấm F5 sẽ ra 404, vì Vercel đi tìm một file tên như vậy và không thấy.
+
+Nối vào backend thật thì đặt hai biến trong Vercel (Settings → Environment Variables),
+chọn cả **Production** lẫn **Preview**:
+
+```
+VITE_AUTH_MODE=api
+VITE_API_BASE_URL=https://<domain-railway>/api/v1
+```
+
+Vercel sẽ cảnh báo tiền tố `VITE_` làm lộ giá trị ra trình duyệt — đúng vậy và không sao:
+Vite chỉ nhúng biến có tiền tố này, còn hai giá trị trên vốn đã công khai. Chọn
+**Change to Config**. Bí mật thật nằm ở backend, không bao giờ xuống trình duyệt.
+
+Vite nhúng biến lúc build, nên đổi biến xong phải **Redeploy** mới có tác dụng.
+
+Ở chế độ `api`, đăng nhập khách hàng bị khoá có chủ ý: backend hiện chỉ có tài khoản nội bộ.
+
 ## Đóng góp
 
 Mỗi thành viên làm trên nhánh mang tên mình rồi mở Pull Request vào `main`. Chi tiết trong [CONTRIBUTING.md](CONTRIBUTING.md).
